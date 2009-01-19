@@ -705,7 +705,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -ccbin &quot;$(VCInstallDir)bin&quot; -c -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Od,/Zi,/RTC1,/MTd -I&quot;$(CUDA_INC_PATH)&quot; -I./ -I../../common/inc -o $(OutDir)/$(InputName).obj $(InputPath)&#x0D;&#x0A;"
+						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -ccbin &quot;$(VCInstallDir)bin&quot; -c -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Od,/Zi,/RTC1,/MTd -I&quot;$(CUDA_INC_PATH)&quot; -I&quot;$(NVSDKCUDA_ROOT)/common/inc&quot; -I./ -o $(OutDir)/$(InputName).obj $(InputPath)&#x0D;&#x0A;"
 						AdditionalDependencies="$(InputName)_kernel.cu;$(InputDir)/fixes.h;$(InputDir)/tweaks.h;$(InputDir)/predicated.h;$(InputDir)/math_linear.h;$(InputDir)/prng.h;$(InputDir)/rt_hit.h;$(InputDir)/rt_ray.h;$(InputDir)/rt_sphere.h"
 						Outputs="$(OutDir)/$(InputName).obj"
 					/>
@@ -715,7 +715,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -ccbin &quot;$(VCInstallDir)bin&quot; -c -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/Od,/Zi,/RTC1,/MTd -I&quot;$(CUDA_INC_PATH)&quot; -I./ -I../../common/inc -o $(OutDir)/$(InputName).obj $(InputFileName)&#x0D;&#x0A;"
+						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -ccbin &quot;$(VCInstallDir)bin&quot; -c -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/Od,/Zi,/RTC1,/MTd -I&quot;$(CUDA_INC_PATH)&quot; -I&quot;$(NVSDKCUDA_ROOT)/common/inc&quot; -I./ -o $(OutDir)/$(InputName).obj $(InputFileName)&#x0D;&#x0A;"
 						AdditionalDependencies="$(InputName)_kernel.cu"
 						Outputs="$(OutDir)/$(InputName).obj"
 					/>
@@ -725,7 +725,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot;  --ptxas-options=-v -ccbin &quot;$(VCInstallDir)bin&quot; -c -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/O2,/Zi,/MT -I&quot;$(CUDA_INC_PATH)&quot; -I./ -I../../common/inc -o $(OutDir)/$(InputName).obj $(InputPath)&#x0D;&#x0A;"
+						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot;  --ptxas-options=-v -ccbin &quot;$(VCInstallDir)bin&quot; -c -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/O2,/Zi,/MT -I&quot;$(CUDA_INC_PATH)&quot; -I&quot;$(NVSDKCUDA_ROOT)/common/inc&quot; -I./ -o $(OutDir)/$(InputName).obj $(InputPath)&#x0D;&#x0A;"
 						AdditionalDependencies="$(InputName)_kernel.cu;$(InputDir)/fixes.h;$(InputDir)/tweaks.h;$(InputDir)/predicated.h;$(InputDir)/math_linear.h;$(InputDir)/prng.h;$(InputDir)/rt_hit.h;$(InputDir)/rt_ray.h;$(InputDir)/rt_sphere.h"
 						Outputs="$(OutDir)/$(InputName).obj"
 					/>
@@ -735,7 +735,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -ccbin &quot;$(VCInstallDir)bin&quot; -c -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/O2,/Zi,/MT -I&quot;$(CUDA_INC_PATH)&quot; -I./ -I../../common/inc -o $(OutDir)/$(InputName).obj $(InputFileName)&#x0D;&#x0A;"
+						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -ccbin &quot;$(VCInstallDir)bin&quot; -c -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/O2,/Zi,/MT -I&quot;$(CUDA_INC_PATH)&quot; -I&quot;$(NVSDKCUDA_ROOT)/common/inc&quot; -I./ -o $(OutDir)/$(InputName).obj $(InputFileName)&#x0D;&#x0A;"
 						AdditionalDependencies="$(InputName)_kernel.cu"
 						Outputs="$(OutDir)/$(InputName).obj"
 					/>
@@ -745,7 +745,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -ccbin &quot;$(VCInstallDir)bin&quot; -deviceemu -c -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/Od,/Zi,/RTC1,/MTd -I&quot;$(CUDA_INC_PATH)&quot; -I./ -I../../common/inc -o $(OutDir)/$(InputName).obj $(InputPath)&#x0D;&#x0A;"
+						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -ccbin &quot;$(VCInstallDir)bin&quot; -deviceemu -c -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/Od,/Zi,/RTC1,/MTd -I&quot;$(CUDA_INC_PATH)&quot; -I&quot;$(NVSDKCUDA_ROOT)/common/inc&quot; -I./ -o $(OutDir)/$(InputName).obj $(InputPath)&#x0D;&#x0A;"
 						AdditionalDependencies="$(InputName)_kernel.cu;$(InputDir)/fixes.h;$(InputDir)/tweaks.h;$(InputDir)/predicated.h;$(InputDir)/math_linear.h;$(InputDir)/prng.h;$(InputDir)/rt_hit.h;$(InputDir)/rt_ray.h;$(InputDir)/rt_sphere.h"
 						Outputs="$(OutDir)/$(InputName).obj"
 					/>
@@ -755,7 +755,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -ccbin &quot;$(VCInstallDir)bin&quot; -deviceemu -c -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/Od,/Zi,/RTC1,/MTd -I&quot;$(CUDA_INC_PATH)&quot; -I./ -I../../common/inc -o $(OutDir)/$(InputName).obj $(InputFileName)&#x0D;&#x0A;"
+						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -ccbin &quot;$(VCInstallDir)bin&quot; -deviceemu -c -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/Od,/Zi,/RTC1,/MTd -I&quot;$(CUDA_INC_PATH)&quot; -I&quot;$(NVSDKCUDA_ROOT)/common/inc&quot; -I./ -o $(OutDir)/$(InputName).obj $(InputFileName)&#x0D;&#x0A;"
 						AdditionalDependencies="$(InputName)_kernel.cu"
 						Outputs="$(OutDir)/$(InputName).obj"
 					/>
@@ -765,7 +765,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -ccbin &quot;$(VCInstallDir)bin&quot; -deviceemu -c -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/O2,/Zi,/MT -I&quot;$(CUDA_INC_PATH)&quot; -I./ -I../../common/inc -o $(OutDir)/$(InputName).obj $(InputPath)&#x0D;&#x0A;"
+						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -ccbin &quot;$(VCInstallDir)bin&quot; -deviceemu -c -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/O2,/Zi,/MT -I&quot;$(CUDA_INC_PATH)&quot; -I&quot;$(NVSDKCUDA_ROOT)/common/inc&quot; -I./ -o $(OutDir)/$(InputName).obj $(InputPath)&#x0D;&#x0A;"
 						AdditionalDependencies="$(InputName)_kernel.cu;$(InputDir)/fixes.h;$(InputDir)/tweaks.h;$(InputDir)/predicated.h;$(InputDir)/math_linear.h;$(InputDir)/prng.h;$(InputDir)/rt_hit.h;$(InputDir)/rt_ray.h;$(InputDir)/rt_sphere.h"
 						Outputs="$(OutDir)/$(InputName).obj"
 					/>
@@ -775,7 +775,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -ccbin &quot;$(VCInstallDir)bin&quot; -deviceemu -c -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/O2,/Zi,/MT -I&quot;$(CUDA_INC_PATH)&quot; -I./ -I../../common/inc -o $(OutDir)/$(InputName).obj $(InputFileName)&#x0D;&#x0A;"
+						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -ccbin &quot;$(VCInstallDir)bin&quot; -deviceemu -c -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/O2,/Zi,/MT -I&quot;$(CUDA_INC_PATH)&quot; -I&quot;$(NVSDKCUDA_ROOT)/common/inc&quot; -I./ -o $(OutDir)/$(InputName).obj $(InputFileName)&#x0D;&#x0A;"
 						AdditionalDependencies="$(InputName)_kernel.cu"
 						Outputs="$(OutDir)/$(InputName).obj"
 					/>
