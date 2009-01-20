@@ -1,6 +1,6 @@
 /*
 	This program is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License version 2 
+	it under the terms of the GNU General Public License version 2
 	as published by the Free Software Foundation.
 
 	This program is distributed in the hope that it will be useful,
@@ -42,7 +42,7 @@ struct hit_t {
 	//
 	// unrolled version
 	//
-	template<bool allow_mad, unsigned n> 
+	template<bool allow_mad, unsigned n>
 		static __device__ void intersect_unrolled(const ray_t &ray, float &t, unsigned &id) {
 			enum { i = n - 1 };
 			intersect_unrolled<allow_mad, i>(ray, t, id);
@@ -65,12 +65,14 @@ struct hit_t {
 			d = math::sqrt(d);
 			const float t1 = b-d < eps ? b+d : b-d;
 			bingo = bingo && (t1 >= eps) && (t1 < t); // if you say so.
-			if (bingo) t = t1; 
+			if (bingo) t = t1;
 			if (bingo) id = i;
 		}
-	//WTF: need to re-specify linkage or else... 
-	template<> static __device__ void intersect_unrolled<false, 0>(const ray_t &ray, float &t, unsigned &id) {}
-	template<> static __device__ void intersect_unrolled<true, 0>(const ray_t &ray, float &t, unsigned &id) {}
+	#ifndef UNIX
+		//WTF: need to re-specify linkage or else...
+		template<> static __device__ void intersect_unrolled<false, 0>(const ray_t &ray, float &t, unsigned &id) {}
+		template<> static __device__ void intersect_unrolled<true, 0>(const ray_t &ray, float &t, unsigned &id) {}
+	#endif
 
 	template<unsigned num_spheres>
 	static __device__ hit_t intersect(ray_t &ray) {
@@ -104,12 +106,16 @@ struct hit_t {
 			d = math::sqrt(d);
 			float t1 = pick_smallest_positive(inf, eps, b, d);
 			bingo = bingo && (t1 < t); // if you say so.
-			if (bingo) t = t1; 
+			if (bingo) t = t1;
 			if (bingo) id = i;
 		}
 		if (id != ~0u) ray.o = ray.advance(t);
 		return hit_t(id);
 	}
 };
+#ifdef UNIX
+	template<> void hit_t::intersect_unrolled<false, 0>(const ray_t &ray, float &t, unsigned &id) {}
+	template<> void hit_t::intersect_unrolled<true, 0>(const ray_t &ray, float &t, unsigned &id) {}
+#endif
 
 #endif

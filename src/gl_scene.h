@@ -1,6 +1,6 @@
 /*
 	This program is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License version 2 
+	it under the terms of the GNU General Public License version 2
 	as published by the Free Software Foundation.
 
 	This program is distributed in the hope that it will be useful,
@@ -48,7 +48,7 @@ public:
 	// transition...
 	static sphere_t make_old_sphere(float rr, const vec_t &p, const vec_t &e, const vec_t &c, refl_t refl) {
 		const float merde = 1; // 1.f/32;
-		return 
+		return
 			// sphere_t(refl, math::sqrt(rr), p, c, e);
 			sphere_t(refl, rr*merde, p*merde, c, e);
 
@@ -77,17 +77,17 @@ class scene_t {
 	typedef std::vector<sphere_t> spheres_t;
 
 	// buffer for cuda transfers.
-	template<typename T> 
+	template<typename T>
 	struct cuda_buffer_t {
 		T *mem;
 		size_t capacity;
 		cuda_buffer_t() : mem(0), capacity(0) {}
-		~cuda_buffer_t() { std::free(mem); }
-		T *get(size_t num) { 
+		~cuda_buffer_t() { free(mem); }
+		T *get(size_t num) {
 			if (num > capacity) {
 				capacity = capacity < 16 ? 16 : capacity;
 				while (capacity < num) capacity *= 2;
-				mem = static_cast<T*>(std::realloc(mem, sizeof(T)*capacity));
+				mem = static_cast<T*>(realloc(mem, sizeof(T)*capacity));
 			}
 			return mem;
 		}
@@ -142,8 +142,8 @@ public:
 	const sphere_t &selection() const { assert(is_valid_selection() && "bad selection, no go"); return spheres[sel]; }
 	sphere_t &selection() { assert(is_valid_selection() && "bad selection, no go"); return spheres[sel]; }
 
-	void reset() { 
-		deselect(); 
+	void reset() {
+		deselect();
 		set_dirty();
 		clipboard = sphere_t(DIFF, math::sqrt(1.f/16), vec_t(0,0,0), vec_t(1,1,0), vec_t(0,0,0));
 		loose_bb = aabb_t::infinite();
@@ -159,7 +159,7 @@ public:
 	// pick a sphere for selection.
 	void picking(const vec_t &ray_o, const vec_t &ray_d);
 
-	void cycle_selection(int dir) { 
+	void cycle_selection(int dir) {
 		sel += dir;
 		if (sel >= size()) // wrap
 			sel = dir > 0 ? 0 : size()-1;
@@ -189,7 +189,7 @@ public:
 	}
 
 	// paste clipboard
-	void paste() { 
+	void paste() {
 		add(clipboard);
 	}
 

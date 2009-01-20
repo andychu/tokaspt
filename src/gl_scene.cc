@@ -1,6 +1,6 @@
 /*
 	This program is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License version 2 
+	it under the terms of the GNU General Public License version 2
 	as published by the Free Software Foundation.
 
 	This program is distributed in the hope that it will be useful,
@@ -50,10 +50,10 @@ namespace scenes {
 	namespace details {
 		static const float inf = std::numeric_limits<float>::infinity(), eps = 1.f/(1<<14);
 
-		static float pick_smallest_positive(float inf, float eps, float b, float d) {
+		static float pick_smallest_positive(float infinity, float epsilon, float b, float d) {
 			float t1 = b-d, t2 = b+d;
-			if (t1 < eps) t1 = inf;
-			if (t2 < eps) t2 = inf;
+			if (t1 < epsilon) t1 = infinity;
+			if (t2 < epsilon) t2 = infinity;
 			return math::min(t1, t2);
 		}
 	}
@@ -337,7 +337,7 @@ bool_t scene_t::load(gl::camera_t &cam) {
 			spheres_t rspheres;
 			gl::camera_t rcam;
 			sphere_t s;
-			unsigned stage = 0, num = 0;
+			int stage = 0, num = 0;
 			int got = 0, integral = 0;
 			enum { max_len = 255 };
 			char buf[max_len+1];
@@ -350,7 +350,7 @@ bool_t scene_t::load(gl::camera_t &cam) {
 				if (stage == 0) {
 					got = sscanf(buf, "Cam(V(%f,%f,%f), V(%f,%f,%f), V(%f,%f,%f), %f, %d)", V(rcam.eye),  V(rcam.fwd), V(rcam.up), &rcam.fovy, &integral);
 					if (got == 11) {
-						rcam.wu  = gl::camera_t::world_up_t(integral); 
+						rcam.wu  = gl::camera_t::world_up_t(integral);
 						rcam.lft = cross(gl::camera_t::world_ups[rcam.wu], rcam.fwd).norm();
 						++stage;
 						continue;
@@ -402,7 +402,7 @@ bool_t scene_t::load_old(gl::camera_t &cam) {
 			while(fgets(buf, max_len, file) == buf) {
 				buf[max_len] = 0;
 				if (buf[0] == '#') continue; // 'comment' at start of line.
-				if (buf[0] == 'V') { 
+				if (buf[0] == 'V') {
 					// for now, only 2 versions, old one stored radius squared.
 					old_version_fixup = false;
 					continue;
@@ -410,7 +410,7 @@ bool_t scene_t::load_old(gl::camera_t &cam) {
 				else if (stage == 0) {
 					got = sscanf(buf, "Cam(V(%f,%f,%f), V(%f,%f,%f), V(%f,%f,%f), %f)", V(rcam.eye),  V(rcam.fwd), V(rcam.up), &rcam.fovy);
 					if (got == 10) {
-						rcam.wu  = gl::camera_t::UP_NY; 
+						rcam.wu  = gl::camera_t::UP_NY;
 						rcam.lft = cross(gl::camera_t::world_ups[rcam.wu], rcam.fwd).norm();
 						++stage;
 						continue;
@@ -452,7 +452,7 @@ bool_t scene_t::save(const gl::camera_t &cam) {
 	// Also, human are supposed to be able to read it.
 	//note: world_up's not exported.
 	static const char
-		header[] = 
+		header[] =
 			"// camera(pos, dir, up, fovy, world_up)\n"
 			"// sphere(pos, emi, col, rad, refl)\n";
 

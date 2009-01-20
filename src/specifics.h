@@ -1,6 +1,6 @@
 /*
 	This program is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License version 2 
+	it under the terms of the GNU General Public License version 2
 	as published by the Free Software Foundation.
 
 	This program is distributed in the hope that it will be useful,
@@ -41,6 +41,9 @@
 		#pragma warning(disable : 4305) // 'initializing' : truncation from 'double' to 'float'
 		#pragma warning(disable : 4146) // unary minus operator applied to unsigned type, result still unsigned
 		#pragma warning(disable : 4530) // C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
+
+		// where would we be without Standard compliance, eh?
+		#define snprintf _snprintf
 	#else
 		// GCC
 		#define ALIGN(x)		__attribute__((aligned(x)))

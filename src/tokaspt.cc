@@ -1,6 +1,6 @@
 /*
 	This program is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License version 2 
+	it under the terms of the GNU General Public License version 2
 	as published by the Free Software Foundation.
 
 	This program is distributed in the hope that it will be useful,
@@ -15,6 +15,9 @@
 
 	Copyright (C) 2009  Thierry Berger-Perrin <tbptbp@gmail.com>, http://ompf.org
 */
+// because of some quirks, it's better if we know.
+// #define USE_FREEGLUT
+
 #include "specifics.h"
 #include "tweaks.h"
 
@@ -27,8 +30,11 @@
 
 
 #include <cstdarg>
+#include <cstring>		// mem ops.
 #include <cassert>
-#include <new> // placement new.
+#include <cstdio>
+#include <cstdlib>		// realloc, free
+#include <new> 		// placement new.
 #include <vector>
 
 #include <algorithm> // std::min/max
@@ -36,7 +42,12 @@
 #include "gl_camera.h"
 
 #include <GL/glew.h>
-#include <GL/glut.h>
+#ifndef USE_FREEGLUT
+	#include <GL/glut.h>
+#else
+	#include <GL/freeglut.h>
+#endif
+
 #ifdef _MSC_VER
 	#pragma comment(lib, "glut32.lib")
 	#pragma comment(lib, "glew32.lib")
@@ -55,11 +66,16 @@
 // initial window size
 enum { window_width = 3*tile_size_x, window_height = 2*tile_size_y };
 
-static const char glut_init_display_string[] = 
-	// "rgba double depth>=16 samples>=1"; // no limit, gets 16 samples, but it's ssslllooowww here.
-	"rgba double depth>=16 samples"; // 4 samples.
-	// "rgba double depth>=16 samples=0";
-
+static const char glut_init_display_string[] =
+	#ifndef FREEGLUT
+		// "rgba double depth>=16 samples>=1"; // no limit, gets 16 samples, but it's ssslllooowww here.
+		"rgba double depth>=16 samples"; // 4 samples.
+		// "rgba double depth>=16 samples=0";
+	#else
+		// FreeGlut doesn't like depth>=16
+		//FIXME: doesn't give use any multisampling either.
+		"rgba double depth samples";
+	#endif
 
 // ===========================================================================
 //
@@ -68,7 +84,7 @@ static const char glut_init_display_string[] =
 // ===========================================================================
 
 // get rid of stupid warnings.
-template<typename T, typename U, typename V> 
+template<typename T, typename U, typename V>
 	static T clamp(U low, V high, T val) { return val < T(low) ? low : val > T(high) ? high : val; }
 
 namespace misc {
@@ -80,7 +96,7 @@ namespace misc {
 	static const char *refl2string(refl_t refl) {
 		const char *txt[4] = { "DIFF", "SPEC", "REFR", "BOGUS" };
 		unsigned i = unsigned(refl);
-		return txt[i < 4 ? i : 3]; 
+		return txt[i < 4 ? i : 3];
 	}
 }
 
@@ -136,9 +152,9 @@ namespace ui {
 
 
 namespace gl {
-	const vec_t camera_t::world_ups[6] = { 
+	const vec_t camera_t::world_ups[6] = {
 		vec_t(0,+1,0), vec_t(0,0,+1), vec_t(+1,0,0),
-		vec_t(0,-1,0), vec_t(0,0,-1), vec_t(-1,0,0) 
+		vec_t(0,-1,0), vec_t(0,0,-1), vec_t(-1,0,0)
 	};
 
 	struct texture_and_pbo_t;
@@ -156,12 +172,12 @@ namespace gl {
 		static camera_t cam, prev_cam;			// so we can detect dirtyness.
 		static screen_sampler_t smp, prev_smp;	// ditto
 
-		static void copy_camera() { 
-			std::memcpy(&prev_cam, &cam, sizeof(cam)); 
-			std::memcpy(&prev_smp, &smp, sizeof(smp)); 
+		static void copy_camera() {
+			std::memcpy(&prev_cam, &cam, sizeof(cam));
+			std::memcpy(&prev_smp, &smp, sizeof(smp));
 		}
-		static bool_t is_camera_dirty() { 
-			return 
+		static bool_t is_camera_dirty() {
+			return
 				std::memcmp(&cam, &prev_cam, sizeof(cam)) != 0 ||
 				std::memcmp(&smp, &prev_smp, sizeof(smp)) != 0;
 		}
@@ -220,10 +236,10 @@ namespace gl {
 			/* format_int = GL_RGBA, format = GL_RGBA, format_pbo = GL_BGRA, */
 			format_int = GL_RGB8,
 			format     = GL_RGB,
-			format_pbo = GL_RGB, 
+			format_pbo = GL_RGB,
 			type = PIXEL_GL_TYPE
 		};
-		texture_and_pbo_t(const point_t &resolution) 
+		texture_and_pbo_t(const point_t &resolution)
 			:
 				tex_id(-1), pbo_id(-1), data_size(resolution.area()*num_components*component_size),
 				res(resolution)
@@ -274,7 +290,7 @@ namespace gl {
 		static void draw_grid(float grid_size, float step) {
 			static GLuint l_grid = -1;
 			// parameters don't change anyway.
-			if (l_grid == -1) {
+			if (l_grid == -1u) {
 				l_grid = glGenLists(1);
 				glNewList(l_grid, GL_COMPILE);
 					// best result with if really attenuated.
@@ -326,11 +342,11 @@ namespace gl {
 		// glut stroke stuff
 		//
 		// GLUT_STROKE_ROMAN
-		//    A proportionally spaced Roman Simplex font for ASCII characters 32 through 127. 
+		//    A proportionally spaced Roman Simplex font for ASCII characters 32 through 127.
 		//    The maximum top character in the font is 119.05 units; the bottom descends 33.33 units.
 		// GLUT_STROKE_MONO_ROMAN
-		//    A mono-spaced spaced Roman Simplex font (same characters as GLUT_STROKE_ROMAN) for ASCII characters 32 through 127. 
-		//    The maximum top character in the font is 119.05 units; the bottom descends 33.33 units. Each character is 104.76 units wide. 
+		//    A mono-spaced spaced Roman Simplex font (same characters as GLUT_STROKE_ROMAN) for ASCII characters 32 through 127.
+		//    The maximum top character in the font is 119.05 units; the bottom descends 33.33 units. Each character is 104.76 units wide.
 		namespace stroke {
 			/* doesn't bring anything, i suppose Glut already has lists.
 			enum { num_glyphs = 128 };
@@ -346,7 +362,7 @@ namespace gl {
 				static void *font = GLUT_STROKE_MONO_ROMAN;
 			#endif
 			static void init() {
-				/*	
+				/*
 				l_glyph_base = glGenLists(128);
 				for (unsigned i=0; i<num_glyphs; ++i) {
 					glNewList(l_glyph_base + i, GL_COMPILE);
@@ -387,8 +403,8 @@ namespace gl {
 			static void *font = GLUT_BITMAP_8_BY_13;
 			//static void *font = GLUT_BITMAP_HELVETICA_10;
 			static int line_height = 14, descent_nudge = 4;
-			static void print(const char c) { glutBitmapCharacter(font, c); } 
-			static void print(const char * const txt) { 
+			static void print(const char c) { glutBitmapCharacter(font, c); }
+			static void print(const char * const txt) {
 				for (const char *p=txt; *p; ++p)
 					glutBitmapCharacter(font, *p);
 			}
@@ -407,20 +423,20 @@ namespace gl {
 	// ===========================================================================
 	namespace geosphere {
 		static const float X = .525731112119133606f, Z = .850650808352039932f;
-		static const GLfloat vdata[12][3] = {    
+		static const GLfloat vdata[12][3] = {
 			{-X, 0, Z}, { X, 0,  Z}, {-X,  0, -Z}, { X,  0, -Z},
-			{ 0, Z, X}, { 0, Z, -X}, { 0, -Z,  X}, { 0, -Z, -X},    
-			{ Z, X, 0}, {-Z, X,  0}, { Z, -X,  0}, {-Z, -X,  0} 
+			{ 0, Z, X}, { 0, Z, -X}, { 0, -Z,  X}, { 0, -Z, -X},
+			{ Z, X, 0}, {-Z, X,  0}, { Z, -X,  0}, {-Z, -X,  0}
 		};
-		static const GLuint tindices[20][3] = { 
-			{0, 4, 1}, {0,9, 4}, {9, 5,4}, { 4,5,8}, {4,8, 1},    
-			{8,10, 1}, {8,3,10}, {5, 3,8}, { 5,2,3}, {2,7, 3},    
-			{7,10, 3}, {7,6,10}, {7,11,6}, {11,0,6}, {0,1, 6}, 
+		static const GLuint tindices[20][3] = {
+			{0, 4, 1}, {0,9, 4}, {9, 5,4}, { 4,5,8}, {4,8, 1},
+			{8,10, 1}, {8,3,10}, {5, 3,8}, { 5,2,3}, {2,7, 3},
+			{7,10, 3}, {7,6,10}, {7,11,6}, {11,0,6}, {0,1, 6},
 			{6, 1,10}, {9,0,11}, {9,11,2}, { 9,2,5}, {7,2,11} };
 
 		static void normalize(GLfloat *a) {
 			GLfloat d = 1/std::sqrt(a[0]*a[0] + a[1]*a[1] + a[2]*a[2]);
-			a[0] *= d; 
+			a[0] *= d;
 			a[1] *= d;
 			a[2] *= d;
 		}
@@ -431,7 +447,7 @@ namespace gl {
 				glVertex3f(b[0]*r, b[1]*r, b[2]*r);
 				glVertex3f(c[0]*r, c[1]*r, c[2]*r);
 				return 1;
-			} 
+			}
 			else {
 				GLfloat ab[3], ac[3], bc[3];
 				for (unsigned i=0; i<3; ++i) {
@@ -445,7 +461,7 @@ namespace gl {
 					draw_triangles( b, bc, ab, div-1, r) +
 					draw_triangles( c, ac, bc, div-1, r) +
 					draw_triangles(ab, bc, ac, div-1, r);
-			}  
+			}
 		}
 
 		static void draw(int num_subdiv, float radius = 1.0f) {
@@ -482,7 +498,7 @@ namespace gl {
 		enum { slices = 32, stacks = 32 };
 		const float factor = 1, units = 2;
 
-		if (l_solid_sphere == -1) {
+		if (l_solid_sphere == -1u) {
 			l_solid_sphere = glGenLists(1);
 			glNewList(l_solid_sphere, GL_COMPILE);
 				if (1) {
@@ -501,14 +517,14 @@ namespace gl {
 		// first pass to set the depth buffer, second to draw.
 		for (unsigned pass=0; pass<2; ++pass) {
 			if (pass == 0) { // depth write pass
-				glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); 
+				glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 				glDepthMask(GL_TRUE);
 				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 				glEnable(GL_POLYGON_OFFSET_FILL);
 			}
 			else {
 				glEnable(GL_BLEND);
-				glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); 
+				glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 				glDepthMask(GL_FALSE);
 				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 				glDisable(GL_POLYGON_OFFSET_FILL);
@@ -609,7 +625,7 @@ namespace gl {
 		static GLuint l_quad_setup_draw = -1;
 		glViewport(0, 0, current_width, current_height);
 
-		if (l_quad_setup_draw == -1) {
+		if (l_quad_setup_draw == -1u) {
 			l_quad_setup_draw = glGenLists(1);
 			glNewList(l_quad_setup_draw, GL_COMPILE);
 				glMatrixMode(GL_PROJECTION);
@@ -625,16 +641,16 @@ namespace gl {
 				enum { flip = 0 };
 				glBegin(GL_QUADS);
 				if (flip) {
-					glTexCoord2f(0.0, 1.0); glVertex3f(-1.0, +1.0, 0.5);
-					glTexCoord2f(1.0, 1.0); glVertex3f(+1.0, +1.0, 0.5);
-					glTexCoord2f(1.0, 0.0); glVertex3f(+1.0, -1.0, 0.5);
-					glTexCoord2f(0.0, 0.0); glVertex3f(-1.0, -1.0, 0.5);
+					glTexCoord2f(0, 1); glVertex3f(-1, +1, 0.5f);
+					glTexCoord2f(1, 1); glVertex3f(+1, +1, 0.5f);
+					glTexCoord2f(1, 0); glVertex3f(+1, -1, 0.5f);
+					glTexCoord2f(0, 0); glVertex3f(-1, -1, 0.5f);
 				}
 				else {
-					glTexCoord2f(0.0, 1.0); glVertex3f(-1.0, -1.0, 0.5);
-					glTexCoord2f(1.0, 1.0); glVertex3f(+1.0, -1.0, 0.5);
-					glTexCoord2f(1.0, 0.0); glVertex3f(+1.0, +1.0, 0.5);
-					glTexCoord2f(0.0, 0.0); glVertex3f(-1.0, +1.0, 0.5);
+					glTexCoord2f(0, 1); glVertex3f(-1, -1, 0.5f);
+					glTexCoord2f(1, 1); glVertex3f(+1, -1, 0.5f);
+					glTexCoord2f(1, 0); glVertex3f(+1, +1, 0.5f);
+					glTexCoord2f(0, 0); glVertex3f(-1, +1, 0.5f);
 				}
 				glEnd();
 				glMatrixMode(GL_PROJECTION);
@@ -672,7 +688,7 @@ namespace gl {
 
 		if (show_ui) {
 			// glColor4ub(255, 255, 64, 48); mimi
-			glColor4ub(255, 255, 255, 24); 
+			glColor4ub(255, 255, 255, 24);
 			glLineWidth(.25f);
 			// draw various crap
 			misc::draw_grid(10, 1);
@@ -705,6 +721,9 @@ namespace gl {
 		float dt = last_time > -1 ? t - last_time : 0;
 		last_time = t;
 
+		// FreeGlut postpones resizing when starting, wait until it settles in.
+		if (gl::current_height == 0 && gl::current_width == 0) return;
+
 		const point_t res(current_width, current_height);
 		if (texture_and_pbo_t::resize_everything_if(res, renderer, gl::state::tex_and_pbo))
 			smallpt_reset_accumulator(); // be sure to wipe it all.
@@ -715,7 +734,7 @@ namespace gl {
 		if (gl::state::is_camera_dirty()) {
 			assert(gl::state::tex_and_pbo && "pas de bras, pas de chocolat");
 			gl::state::smp = gl::state::cam.make_sampler(gl::state::tex_and_pbo->res); // if that's what's mapped.
-			const vec_t cu_cam[4] = { 
+			const vec_t cu_cam[4] = {
 				gl::state::smp.dx, gl::state::smp.dy,
 				gl::state::smp.top, gl::state::cam.get_eye()
 			};
@@ -746,14 +765,14 @@ namespace gl {
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
 		// glDisable (GL_MULTISAMPLE_ARB);
-		glEnable (GL_MULTISAMPLE_ARB); 
+		glEnable (GL_MULTISAMPLE_ARB);
 		// glHint(GL_MULTISAMPLE_FILTER_HINT_NV, GL_FASTEST);
 		glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 		glHint(GL_MULTISAMPLE_FILTER_HINT_NV, GL_NICEST);
 
 		// prime the scene data and camera.
 		scene.init(gl::state::cam);
-		// 
+		//
 		// rest of init will happen naturally as a resize.
 		//
 	}
@@ -763,7 +782,7 @@ namespace gl {
 int run(int argc, char *argv[]) {
 	const char title[] = "the once known as smallpt.";
     glutInit(&argc, argv);
-	glutInitDisplayString(glut_init_display_string); 
+	glutInitDisplayString(glut_init_display_string);
     glutInitWindowSize(window_width, window_height);
     glutCreateWindow(title);
 	{
@@ -772,7 +791,7 @@ int run(int argc, char *argv[]) {
 		int multi = glutGet(GLUT_WINDOW_NUM_SAMPLES);
 		printf("glut: doublebuffer %s depth bits %d multisamples %d\n", doublebuffer ? "yes" : "no", depth, multi);
 
-		int ms_buf, ms; 
+		int ms_buf, ms;
 		glGetIntegerv (GL_SAMPLE_BUFFERS_ARB, &ms_buf);
 		glGetIntegerv (GL_SAMPLES_ARB, &ms);
 		printf("OpenGl: %d sample buffers, %d samples.\n", ms_buf, ms);
@@ -852,7 +871,7 @@ namespace ui {
 	}
 	// need to record set/reset actions or we'd miss set/reset happening within one frame.
 	// tg[0] is the set set, tg[1] the reset set.
-	static details::toggles_t toggles[2]; 
+	static details::toggles_t toggles[2];
 
 	static nv::GlutUIContext nvui;
 	// persistent ui states.
@@ -876,7 +895,7 @@ namespace ui {
 
 			bool_t begin() const { return unfold.bits != 0; }
 			void end() { prev_bits = unfold.bits; }
-			unfold_t edge() const { 
+			unfold_t edge() const {
 				unfold_t u = { unfold.bits };
 				u.bits ^= prev_bits;
 				return u;
@@ -885,8 +904,8 @@ namespace ui {
 		static pseudo_menu_t pseudo_menu;
 
 		// because other actions need to be modulated, that speed is cached here.
-		// camera_modulation, if + accelerates, - decelerates. 
-		static float camera_cached_speed = 1, camera_modulation = 0; 
+		// camera_modulation, if + accelerates, - decelerates.
+		static float camera_cached_speed = 1, camera_modulation = 0;
 	}
 
 
@@ -931,10 +950,10 @@ namespace ui {
 
 			case 0x03: if (e.mod_ctrl) scene.copy(); return;	// ctrl-c
 			case 0x16: // ctrl-v (same place or in front of camera with shift)
-				if (e.mod_ctrl) 
+				if (e.mod_ctrl)
 					if (e.mod_shift)
 						scene.paste(gl::state::cam.get_eye() + gl::state::cam.get_fwd());
-					else 
+					else
 						scene.paste();
 				return;
 
@@ -986,7 +1005,7 @@ namespace ui {
 		float d[3] = {
 			-toggles[0].get<details::toggles::move_l>() + toggles[0].get<details::toggles::move_r>(),
 			-toggles[0].get<details::toggles::move_d>() + toggles[0].get<details::toggles::move_u>(),
-			-toggles[0].get<details::toggles::move_b>() + toggles[0].get<details::toggles::move_f>() 
+			-toggles[0].get<details::toggles::move_b>() + toggles[0].get<details::toggles::move_f>()
 		};
 		for (unsigned i=0; i<3; ++i) d[i] *= delta*cam_speed;
 		camera.set_eye(camera.get_eye() + camera.get_lft()*d[0] + camera.get_up()*d[1] + camera.get_fwd()*d[2]);
@@ -1044,7 +1063,7 @@ namespace ui {
 							float d = 1;
 							scene.addd(gl::state::cam.get_eye() + gl::state::smp.map(coords)*d);
 						}
-						else 
+						else
 							gl::state::cam.look_at(gl::state::cam.get_eye() + gl::state::smp.map(coords));
 						smallpt_reset_accumulator();
 					}
@@ -1055,19 +1074,19 @@ namespace ui {
 							// float dx = float(d_coords.x)/gl::current_width, dy = float(d_coords.y)/gl::current_height;
 							float dx = state::camera_cached_speed*d_coords.x/gl::current_width;
 							float dy = state::camera_cached_speed*d_coords.y/gl::current_height;
-							if (state & nv::ButtonFlags_Shift) 
+							if (state & nv::ButtonFlags_Shift)
 								gl::state::cam.set_eye(gl::state::cam.get_eye() + gl::state::cam.get_lft()*dx - gl::state::cam.get_fwd()*dy);
 							else
 								gl::state::cam.set_eye(gl::state::cam.get_eye() + gl::state::cam.get_lft()*dx - gl::state::cam.get_up()*dy);
 							smallpt_reset_accumulator();
 						}
 					break;
-				case 2: 
+				case 2:
 					{
 						bool dirty = false;
 						switch (state & mod_mask) {
 							case 0: // no modifier, picking
-								if (is_begin) 
+								if (is_begin)
 									scene.picking(gl::state::cam.get_eye(), gl::state::smp.map(edge_coords).norm());
 								break;
 							case nv::ButtonFlags_Ctrl: // incrementally modify its radius (don't store any state)
@@ -1103,7 +1122,7 @@ namespace ui {
 
 	enum {
 		// a group flag to put widgets on a line.
-		gf_one_line =  nv::GroupFlags_LayoutHorizontal | nv::GroupFlags_LayoutNoMargin | nv::GroupFlags_AlignRight // | GroupFlags_LayoutNoSpace 
+		gf_one_line =  nv::GroupFlags_LayoutHorizontal | nv::GroupFlags_LayoutNoMargin | nv::GroupFlags_AlignRight // | GroupFlags_LayoutNoSpace
 	};
 	static nv::Rect rnone;
 
@@ -1118,12 +1137,12 @@ namespace ui {
 		struct float_buffer_t {
 			enum { storage_size = 63 };
 			char storage[storage_size+1];
-			void set(const float &f) { _snprintf(storage, storage_size, "%g", f); storage[storage_size] = 0; }
+			void set(const float &f) { snprintf(storage, storage_size, "%g", f); storage[storage_size] = 0; }
 			bool_t evaluate(float &dst, const int len) {
 				// ensure dst is unharmed; simpler to acheive with sscanf.
 				storage[len] = 0;
 				float dummy;
-				if (std::sscanf(storage, "%f", &dummy) != 1) 
+				if (std::sscanf(storage, "%f", &dummy) != 1)
 					return false;
 				dst = dummy;
 				return true;
@@ -1171,7 +1190,7 @@ namespace ui {
 
 	static numeric_field_t *numeric_field = 0;
 	// a) display a clickable button b) attach or detach to a value behind it, whether that button gets clicked.
-	template<typename T> 
+	template<typename T>
 		static void editable(const nv::Rect &r, const char * const txt, T *value) {
 			static numeric_field_t store;
 			if (nvui.doButton(r, txt, 0)) {
@@ -1187,7 +1206,7 @@ namespace ui {
 	static bool nvui_wants_kbd = false;
 
 	// we need to filter keys nvui sees, because of its behavior vs weird input.
-	template<bool is_special> 
+	template<bool is_special>
 		static void submit_key(uint8_t key, int x, int y) {
 			if (!is_special) switch (key) {
 				case '\r': case '\b': case '.': case 'e':
@@ -1200,7 +1219,7 @@ namespace ui {
 					return;
 			}
 			else switch (key) {
-				case GLUT_KEY_LEFT: case GLUT_KEY_RIGHT: 
+				case GLUT_KEY_LEFT: case GLUT_KEY_RIGHT:
 				case GLUT_KEY_HOME: case GLUT_KEY_END:
 					nvui.specialKeyboard(key, x, y);
 				default:
@@ -1216,9 +1235,9 @@ namespace ui {
 		bool dirty = false;
 
 		nvui.begin();
-			// 
+			//
 			// Params
-			// 
+			//
 			// gamma, fovy, max_paths, spp
 			nvui.beginGroup(GroupFlags_GrowDownFromLeft);
 				nvui.beginGroup(gf_one_line);
@@ -1226,7 +1245,7 @@ namespace ui {
 					if (state::unfold_params) {
 						// some silly stats
 						nvui.doLabel(rnone, sys::fmt_t("fps %5.2f", 1/time_delta), 1);
-						const float 
+						const float
 							rate = 1/(gl::last_render_time/1000),
 							spp_per_mn  = 60*(params.spp)*rate;
 						nvui.doLabel(rnone, sys::fmt_t("spp %5d, %5.0f/mn", params.pass*params.spp, spp_per_mn), 1);
@@ -1275,15 +1294,15 @@ namespace ui {
 				focused |= nvui.isOnFocus();
 			nvui.endGroup();
 
-			// 
+			//
 			// sphere
-			// 
+			//
 			// emission, color, radius, type.
 			nvui.beginGroup(GroupFlags_GrowDownFromRight);
 			if (!(state::unfold_sphere && scene.is_valid_selection()))
 				nvui.doButton(rnone, "S", &state::unfold_sphere, 0); // a little button.
 			else {
-				enum { 
+				enum {
 					label_w = 28,
 					sld_w = 72, sld3_w = 3*sld_w + 2*nvui_margin,
 					max_w = sld3_w + nvui_margin + label_w,
@@ -1355,7 +1374,7 @@ namespace ui {
 					"	dirty |= nvui.doHorizontalSlider(rsld, fl, fh, &v.m[0]);\n"
 					"}\n"
 					"nvui.endGroup();\n";
-				
+
 				nvui.doLabel(rnone, txt, 1);
 			}
 
@@ -1363,22 +1382,22 @@ namespace ui {
 			// pseudo menu handling, for global operations.
 			//
 			if (state::pseudo_menu.begin()) {
-				enum { 
+				enum {
 					vlbl_w = 64, vsld_w = 96, vedi_w = 64, // typical 3 widget line.
 					total_w = vlbl_w + vsld_w + vlbl_w + 2*nvui_margin,
 					// half_w = (total_w - nvui_margin)/2
 					half_w = (total_w + (2-1)*nvui_margin)/2 // grr, they are out of panels, hence more margin.
 				};
 				static nv::Rect menu_rect(256, 256, 0, 0);
-				
+
 				const state::pseudo_menu_t::unfold_t edge = state::pseudo_menu.edge();
 				bool unfold_menu = true;
 				nvui.beginPanel(menu_rect, "global operations", &unfold_menu);
 				if (unfold_menu) {
-					static const nv::Rect 
-						rlbl(0,0,vlbl_w,0), rsld(0,0,vsld_w, 0), redi(0, 0, vedi_w, 0), 
+					static const nv::Rect
+						rlbl(0,0,vlbl_w,0), rsld(0,0,vsld_w, 0), redi(0, 0, vedi_w, 0),
 						rhalf(0, 0, half_w, 0), rline(0, 0, total_w, 0);
-					static bool unfold_menu[2] = { 0 };
+					static bool unfold_menus[2] = { 0 };
 					unsigned menu_idx = 0;
 					// refit
 					static float refit_max_dim = 1;
@@ -1390,8 +1409,8 @@ namespace ui {
 						//
 						// scene refit
 						//
-						nvui.beginPanel(rnone, "refit", &unfold_menu[menu_idx]);
-						if (unfold_menu[menu_idx]) {
+						nvui.beginPanel(rnone, "refit", &unfold_menus[menu_idx]);
+						if (unfold_menus[menu_idx]) {
 							if (nvui.doButton(rline, "shrink that scene, now!", 0, 1))
 								scene.mdl_refit(gl::state::cam, refit_fit, refit_max_dim);
 							nvui.doCheckButton(rnone, "fit", &refit_fit);
@@ -1404,8 +1423,8 @@ namespace ui {
 						//
 						// scene boxing
 						//
-						nvui.beginPanel(rnone, "englobe", &unfold_menu[menu_idx]);
-						if (unfold_menu[menu_idx]) {
+						nvui.beginPanel(rnone, "englobe", &unfold_menus[menu_idx]);
+						if (unfold_menus[menu_idx]) {
 							if (nvui.doButton(rline, englobe_hollow ? "yeah, box it!" : "wrap a sphere around it, please.", 0, 1))
 								scene.mdl_englobe(englobe_hollow, englobe_space, englobe_scale);
 							nvui.doCheckButton(rnone, "hollow", &englobe_hollow);
@@ -1432,7 +1451,7 @@ namespace ui {
 				}
 				else
 					state::pseudo_menu.unfold.bits = 0;
-				
+
 				focused |= nvui.isOnFocus();
 				if (1 && edge.bits) {
 					// try to center
@@ -1445,7 +1464,7 @@ namespace ui {
 			}
 			state::pseudo_menu.end();
 
-	
+
 			// we're almost done now.
 			if (dirty)
 				scene.set_dirty();
@@ -1461,7 +1480,7 @@ namespace ui {
 			// do something with the mouse if it wasn't absorbed.
 			if (!focused)
 				handle_mouse();
-			
+
 			// if we have to draw some more 2D stuff,
 			// use the transfo nvui has set
 			gl::display_post_nvui_hook(time_abs, time_delta);
@@ -1481,7 +1500,7 @@ void display() {
 void reshape(int new_w, int new_h) {
 	static int W = glutGet(GLUT_SCREEN_WIDTH), H = glutGet(GLUT_SCREEN_HEIGHT);
 	if (new_w <= 0 || new_h <= 0) return; // minimization. hmpff.
-	int 
+	int
 		w = misc::argument_reduction(W, int(tile_size_x), tweaks::make_res_x(new_w)),
 		h = misc::argument_reduction(H, int(tile_size_y), tweaks::make_res_y(new_h));
 	// printf("reshape: (%d, %d) -> (%d, %d) :: (%d, %d)\n", new_w, new_h, w, h, W, H);
@@ -1509,7 +1528,7 @@ template<bool down> void keyboard_regular(unsigned char key, int x, int y) {
 	e.mod_alt    = mod & GLUT_ACTIVE_ALT ? 1 : 0;
 	ui::kbd(e, point_t(x, y));
 }
-template<bool down> void keyboard_special(int key, int x, int y) { 
+template<bool down> void keyboard_special(int key, int x, int y) {
 	if (down) ui::submit_key<true>(key, x, y);
 	if (ui::nvui_wants_kbd) return;
 	int mod = glutGetModifiers();
@@ -1525,10 +1544,10 @@ template<bool down> void keyboard_special(int key, int x, int y) {
 }
 
 // we'll pull mouse events from nvui.
-void mouse(int button, int state, int x, int y) { 
+void mouse(int button, int state, int x, int y) {
 	ui::nvui.mouse(button, state, x,y);
 }
-void motion(int x, int y) { 
+void motion(int x, int y) {
 	ui::nvui.mouseMotion(x,y);
 }
 

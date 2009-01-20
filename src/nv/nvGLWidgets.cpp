@@ -73,14 +73,14 @@ const static float s_colors[cNbColors][4] =
     { norm255(79), norm255(129), norm255(189), 1.0 },
     { norm255(128), norm255(100), norm255(162), 1.0 },
     { norm255(128), norm255(100), norm255(162), 1.0 },
-    
+
     // cTranslucent
     { norm255(0), norm255(0), norm255(0), 0.0 },
 	{ norm255(0), norm255(0), norm255(0), 0.0 },
 	{ norm255(0), norm255(0), norm255(0), 0.0 },
 	{ norm255(0), norm255(0), norm255(0), 0.0 },
 };
-    
+
 
 
 template <typename T> T max(const T & a, const T & b)
@@ -100,7 +100,7 @@ const char* cWidgetVSSource = {
     "};
 
 // @@ IC: Use standard GLSL. Do not initialize uniforms.
-	
+
 const char* cWidgetFSSource = {
     "#version 120\n\
     uniform vec4 fillColor /*= vec4( 1.0, 0.0,0.0,1.0)*/;\n\
@@ -180,21 +180,21 @@ GLUIPainter::GLUIPainter():
 {
 }
 
-int getWidgetMargin() 
+int getWidgetMargin()
 {
     return 3 ; //2  ;
 }
-int getWidgetSpace() 
+int getWidgetSpace()
 {
     return 2 ;
 }
 
-int getAutoWidth() 
+int getAutoWidth()
 {
     return 100 ;
 }
 
-int getAutoHeight() 
+int getAutoHeight()
 {
     return tbp_font_height+tbp_font_descent;
 }
@@ -274,16 +274,16 @@ int GLUIPainter::getTextLineWidthAt(const char * text, int charNb) const
 int GLUIPainter::getPickedCharNb(const char * text, const Point& at) const
 {
     const char * textstart = text;
-    
+
     int w = 1;
     if ( at.x < w ) return 0;
 
     while(*text != '\0' && *text != '\n')
     {
-        
+
         w += glutBitmapWidth( tbp_font, *text);
-        
-        if ( at.x < w ) return (text - textstart); 
+
+        if ( at.x < w ) return (text - textstart);
 
         text++;
     }
@@ -371,7 +371,7 @@ Rect GLUIPainter::getButtonRect(const Rect & r, const char * text, Rect & rt) co
     Rect rect = r;
     rt.x = /*4* */getWidgetMargin();
     rt.y = /*4* */getWidgetMargin();
-    
+
     if (rect.w == 0)
     {
         rt.w = getTextLineWidth(text);
@@ -402,14 +402,14 @@ void GLUIPainter::drawButton(const Rect & r, const char * text, const Rect & rt,
 Rect GLUIPainter::getCheckRect(const Rect & r, const char * text, Rect & rt, Rect& rc) const
 {
     Rect rect = r;
-    
+
     int rcOffset = (int) (0.125*getAutoHeight());
     rc.h = getAutoHeight() - 2*rcOffset;
     rc.w = rc.h;
-    
+
     rc.x = getWidgetMargin() + rcOffset;
     rc.y = getWidgetMargin() + rcOffset;
-        
+
     rt.x = getAutoHeight() + 2*getWidgetMargin();
     rt.y = getWidgetMargin();
 
@@ -429,7 +429,7 @@ Rect GLUIPainter::getCheckRect(const Rect & r, const char * text, Rect & rt, Rec
 }
 
 void GLUIPainter::drawCheckButton(const Rect & r, const char * text, const Rect & rt, const Rect& rc, bool isChecked, bool isHover, bool isFocus, int style)
-{	
+{
     if (style) drawFrame( r, Point( rt.y, rt.y ), isHover, false, isFocus );
     drawBoolFrame( Rect(r.x+rc.x, r.y+rc.y, rc.w, rc.h), Point( rc.w/6, rc.h/6 ), isHover, isChecked, false );
     drawText( Rect(r.x+rt.x, r.y+rt.y, rt.w, rt.h) , text);
@@ -438,11 +438,11 @@ void GLUIPainter::drawCheckButton(const Rect & r, const char * text, const Rect 
 Rect GLUIPainter::getRadioRect(const Rect & r, const char * text, Rect & rt, Rect& rr) const
 {
     Rect rect = r;
-        
+
     int rrOffset = (int) (0.125*getAutoHeight());
     rr.h = getAutoHeight() - 2*rrOffset;
     rr.w = rr.h;
-    
+
     rr.x = getWidgetMargin() + rrOffset;
     rr.y = getWidgetMargin() + rrOffset;
 
@@ -480,15 +480,15 @@ Rect GLUIPainter::getHorizontalSliderRect(const Rect & r, Rect& rs, float v, Rec
 
     if (rect.h == 0)
         rect.h = getAutoHeight() + 2 * getWidgetMargin();
-    
+
     // Eval the sliding & cursor rect
     rs.y = getWidgetMargin();
     rs.h = rect.h - 2 * rs.y;
-    
+
     rc.y = rs.y;
     rc.h = rs.h;
-    
-    rs.x = 0;//getWidgetMargin(); 
+
+    rs.x = 0;//getWidgetMargin();
     rc.w = rc.h;
     rs.w = rect.w - 2 * rs.x - rc.w;
     rc.x = int(v * rs.w);
@@ -546,7 +546,7 @@ Rect GLUIPainter::getListRect(const Rect & r, int numOptions, const char * optio
         for (int i = 0; i < numOptions; i++)
         {
             int l = getTextLineWidth(options[i]);
-            rt.w = ( l > rt.w ? l : rt.w ); 
+            rt.w = ( l > rt.w ? l : rt.w );
         }
         ri.w = rt.w + 2*rt.x;
         rect.w = ri.w + 2*ri.x;
@@ -572,7 +572,7 @@ Rect GLUIPainter::getListRect(const Rect & r, int numOptions, const char * optio
 
 void GLUIPainter::drawListItem(const Rect & r, const char * text, const Rect & rt, bool isSelected, bool isHover, int /*style*/)
 {
-//	drawFrame( r, Point(0, 0), isHover, isSelected, false );	
+//	drawFrame( r, Point(0, 0), isHover, isSelected, false );
     drawText( Rect(r.x+rt.x, r.y+rt.y, rt.w, rt.h), text, isHover, isSelected);
 }
 
@@ -580,15 +580,15 @@ void GLUIPainter::drawListBox(const Rect & r, int numOptions, const char * optio
 {
     drawFrame( r, Point(ri.x, ri.y) );
 
-    Rect ir( r.x + ri.x, r.y + r.h - ri.y - ri.h, ri.w, ri.h );  
+    Rect ir( r.x + ri.x, r.y + r.h - ri.y - ri.h, ri.w, ri.h );
     for ( int i = 0; i < numOptions; i++ )
-    {	
+    {
         if ( (i == hovered) || (i == selected))
         {
             drawFrame( ir, Point(ri.x, ri.y), false, (i == selected));
         }
 
-        drawText( Rect(ir.x + rt.x , ir.y + rt.y, rt.w, rt.h), options[i]);	
+        drawText( Rect(ir.x + rt.x , ir.y + rt.y, rt.w, rt.h), options[i]);
 
         ir.y -= ir.h;
     }
@@ -599,7 +599,7 @@ Rect GLUIPainter::getComboRect(const Rect & r, int numOptions, const char * opti
     Rect rect = r;
     rt.x = getWidgetMargin();
     rt.y = getWidgetMargin();
-    
+
     if (rect.h == 0)
     {
         rt.h = getFontHeight();
@@ -611,7 +611,7 @@ Rect GLUIPainter::getComboRect(const Rect & r, int numOptions, const char * opti
     }
 
     rd.h = rt.h;
-    rd.w = rd.h;     
+    rd.w = rd.h;
     rd.y = rt.y;
 
     if (rect.w == 0)
@@ -620,7 +620,7 @@ Rect GLUIPainter::getComboRect(const Rect & r, int numOptions, const char * opti
         for (int i = 0; i < numOptions; i++)
         {
             int l = getTextLineWidth(options[i]);
-            rt.w = ( l > rt.w ? l : rt.w ); 
+            rt.w = ( l > rt.w ? l : rt.w );
         }
         rect.w = rt.w + 2*rt.x;
 
@@ -641,7 +641,7 @@ Rect GLUIPainter::getComboOptionsRect(const Rect & rCombo, int numOptions, const
 {
     // the options frame is like a list box
     Rect rect = getListRect( Rect(), numOptions, options, ri, rit);
-    
+
     // offset by the Combo box pos itself
     rect.x = rCombo.x;
     rect.y = rCombo.y - rect.h;
@@ -670,7 +670,7 @@ Rect GLUIPainter::getPanelRect(const Rect & r, const char * text, Rect& rt, Rect
     Rect rect = r;
     rt.x = getWidgetMargin();
     rt.y = getWidgetMargin();
-    
+
     if (rect.h == 0)
     {
         rt.h = getFontHeight();
@@ -679,17 +679,17 @@ Rect GLUIPainter::getPanelRect(const Rect & r, const char * text, Rect& rt, Rect
     else
     {
         rt.h = rect.h - 2 * rt.y;
-    }   
+    }
 
     ra.h = rt.h;
-    ra.w = ra.h;     
+    ra.w = ra.h;
     ra.y = rt.y;
 
     if (rect.w == 0)
     {
         rt.w = getTextLineWidth(text);
         rect.w = rt.w + 2 * rt.x;
-        
+
         // Add room for drop down button
         rect.w += ra.h + rt.x;
     }
@@ -732,17 +732,17 @@ Rect GLUIPainter::getTextureViewRect(const Rect & r, Rect& rt) const
     return rect;
 }
 
-void GLUIPainter::drawTextureView(const Rect & rect, const void* texID, const Rect& rt, const Rect & rz, int mipLevel, 
-                                  float texelScale, float texelOffset, int r, int g, int b, int a, 
+void GLUIPainter::drawTextureView(const Rect & rect, const void* texID, const Rect& rt, const Rect & rz, int mipLevel,
+                                  float texelScale, float texelOffset, int r, int g, int b, int a,
                                   int /*style*/)
 {
     drawFrame( rect, Point(rt.x, rt.y), false, false, false );
 
-    GLuint lTexID = reinterpret_cast<GLuint> ( texID );
+    GLuint lTexID = GLuint(size_t(texID));
 
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, lTexID);
-    glColor3f(1.0f, 1.0f, 1.0f);	
+    glColor3f(1.0f, 1.0f, 1.0f);
 
     glUseProgram(m_textureViewProgram);
     glUniform1f( m_texMipLevelUniform, (float) mipLevel);
@@ -777,8 +777,8 @@ void GLUIPainter::init()
         GLuint fShader = nv::CompileGLSLShader( GL_FRAGMENT_SHADER, cWidgetFSSource);
         if (!fShader) fprintf(stderr, "Fragment shader compile failed\n");
 
-        m_widgetProgram = nv::LinkGLSLProgram( vShader, fShader );	
-        
+        m_widgetProgram = nv::LinkGLSLProgram( vShader, fShader );
+
         m_fillColorUniform = glGetUniformLocation(m_widgetProgram, "fillColor");
         m_borderColorUniform = glGetUniformLocation(m_widgetProgram, "borderColor");
         m_zonesUniform = glGetUniformLocation(m_widgetProgram, "zones");
@@ -788,7 +788,7 @@ void GLUIPainter::init()
             GLuint fShaderTex = nv::CompileGLSLShader( GL_FRAGMENT_SHADER, cTexViewWidgetFSSource);
             if (!fShaderTex) fprintf(stderr, "Fragment shader compile failed\n");
 
-            m_textureViewProgram = nv::LinkGLSLProgram( vShader, fShaderTex );	
+            m_textureViewProgram = nv::LinkGLSLProgram( vShader, fShaderTex );
             m_texMipLevelUniform = glGetUniformLocation(m_textureViewProgram, "mipLevel");
             m_texelScaleUniform = glGetUniformLocation(m_textureViewProgram, "texelScale");
             m_texelOffsetUniform = glGetUniformLocation(m_textureViewProgram, "texelOffset");
@@ -800,26 +800,26 @@ void GLUIPainter::init()
 	{
         m_setupStateDL = glGenLists(1);
         glNewList( m_setupStateDL, GL_COMPILE);
-		{			
+		{
     	    // Cache previous state
             glPushAttrib( GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT );
-            
+
             // fill mode always
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		   
+
             // Stencil / Depth buffer and test disabled
 			glDisable(GL_STENCIL_TEST);
 			glStencilMask( 0 );
 			glDisable(GL_DEPTH_TEST);
 			glDepthMask( GL_FALSE );
-			
+
 			// Blend on for alpha
             glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
             // Color active
 			glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
-		
+
             // Modelview is identity
             glMatrixMode( GL_MODELVIEW );
             glPushMatrix();
@@ -832,7 +832,7 @@ void GLUIPainter::init()
 	{
         m_restoreStateDL = glGenLists(1);
         glNewList( m_restoreStateDL, GL_COMPILE);
-		{			
+		{
             // Restore state.
 	        glPopAttrib();
 
@@ -914,7 +914,7 @@ void GLUIPainter::drawString( int x, int y, const char * text, int nbLines )
             lineNb--;
             glRasterPos2i(x+1, y + 4 + lineNb*getFontHeight());
             glCallLists(endNb - startNb , GL_UNSIGNED_BYTE, textOri + startNb);
-            
+
             endNb++;
             startNb = endNb;
         }
@@ -933,7 +933,7 @@ void GLUIPainter::drawRect( const Rect & rect, int fillColorId, int borderColorI
 
     float x0 = rect.x;
     float x1 = rect.x + rect.w;
-    
+
     float y0 = rect.y;
     float y1 = rect.y + rect.h;
 
@@ -964,7 +964,7 @@ void GLUIPainter::drawRoundedRect( const Rect& rect, const Point& corner, int fi
     float x1 = rect.x + corner.x;
     float x2 = rect.x + rect.w - corner.x;
     float x3 = rect.x + rect.w;
-    
+
     float y0 = rect.y;
     float y1 = rect.y + corner.y;
     float y2 = rect.y + rect.h - corner.y;
@@ -1006,7 +1006,7 @@ void GLUIPainter::drawRoundedRect( const Rect& rect, const Point& corner, int fi
         glVertex2f( x2, y2);
         glTexCoord2f(xb, 0);
         glVertex2f( x3, y2);
- 
+
         glTexCoord2f(0, yb);
         glVertex2f( x2, y3);
         glTexCoord2f(xb, yb);
@@ -1027,7 +1027,7 @@ void GLUIPainter::drawRoundedRect( const Rect& rect, const Point& corner, int fi
         glVertex2f( x1, y2);
         glTexCoord2f(0, 0);
         glVertex2f( x2, y2);
- 
+
         glTexCoord2f(0, yb);
         glVertex2f( x1, y3);
         glTexCoord2f(0, yb);
@@ -1051,7 +1051,7 @@ void GLUIPainter::drawRoundedRectOutline( const Rect& rect, const Point& corner,
     float x1 = rect.x + corner.x;
     float x2 = rect.x + rect.w - corner.x;
     float x3 = rect.x + rect.w;
-    
+
     float y0 = rect.y;
     float y1 = rect.y + corner.y;
     float y2 = rect.y + rect.h - corner.y;
@@ -1093,7 +1093,7 @@ void GLUIPainter::drawRoundedRectOutline( const Rect& rect, const Point& corner,
         glVertex2f( x2, y2);
         glTexCoord2f(xb, 0);
         glVertex2f( x3, y2);
- 
+
         glTexCoord2f(0, yb);
         glVertex2f( x2, y3);
         glTexCoord2f(xb, yb);
@@ -1115,7 +1115,7 @@ void GLUIPainter::drawRoundedRectOutline( const Rect& rect, const Point& corner,
         glVertex2f( x1, y2);
         glTexCoord2f(0, 0);
         glVertex2f( x2, y2);
- 
+
         glTexCoord2f(0, yb);
         glVertex2f( x1, y3);
         glTexCoord2f(0, yb);
@@ -1128,7 +1128,7 @@ void GLUIPainter::drawRoundedRectOutline( const Rect& rect, const Point& corner,
 void GLUIPainter::drawCircle( const Rect& rect, int fillColorId, int borderColorId ) const
 {
     glUseProgram(m_widgetProgram);
-    
+
     glUniform4fv( m_fillColorUniform, 1, s_colors[fillColorId]);
     glUniform4fv( m_borderColorUniform, 1, s_colors[borderColorId]);
     glUniform2f( m_zonesUniform, (rect.w / 2) - 1, (rect.w / 2) - 2);
@@ -1161,7 +1161,7 @@ void GLUIPainter::drawMinus( const Rect& rect, int width, int fillColorId, int b
 {
     float xb = width;
     float yb = width;
-    
+
     float xoff = xb ;
     float yoff = yb ;
 
@@ -1171,7 +1171,7 @@ void GLUIPainter::drawMinus( const Rect& rect, int width, int fillColorId, int b
     float y1 = rect.y + rect.h * 0.5;
 
     glUseProgram(m_widgetProgram);
-    
+
     glUniform4fv( m_fillColorUniform, 1, s_colors[fillColorId]);
     glUniform4fv( m_borderColorUniform, 1, s_colors[borderColorId]);
     glUniform2f( m_zonesUniform, (xb) - 1, (xb) - 2);
@@ -1181,7 +1181,7 @@ void GLUIPainter::drawMinus( const Rect& rect, int width, int fillColorId, int b
         glVertex2f( x0, y1 + yoff);
         glTexCoord3f(xb, -yb, 0);
         glVertex2f( x0, y1 - yoff);
- 
+
         glTexCoord3f(-xb, 0, 0);
         glVertex2f( x0 + xoff , y1 + yoff);
         glTexCoord3f(xb, 0, 0);
@@ -1205,7 +1205,7 @@ void GLUIPainter::drawPlus( const Rect& rect, int width, int fillColorId, int bo
 {
     float xb = width;
     float yb = width;
-    
+
     float xoff = xb ;
     float yoff = yb ;
 
@@ -1218,7 +1218,7 @@ void GLUIPainter::drawPlus( const Rect& rect, int width, int fillColorId, int bo
     float y2 = rect.y + rect.h * 0.9;
 
     glUseProgram(m_widgetProgram);
-    
+
     glUniform4fv( m_fillColorUniform, 1, s_colors[fillColorId]);
     glUniform4fv( m_borderColorUniform, 1, s_colors[borderColorId]);
     glUniform2f( m_zonesUniform, (xb) - 1, (xb) - 2);
@@ -1228,7 +1228,7 @@ void GLUIPainter::drawPlus( const Rect& rect, int width, int fillColorId, int bo
         glVertex2f( x0, y1 + yoff);
         glTexCoord3f(xb, -yb, 0);
         glVertex2f( x0, y1 - yoff);
- 
+
         glTexCoord3f(-xb, 0, 0);
         glVertex2f( x0 + xoff , y1 + yoff);
         glTexCoord3f(xb, 0, 0);
@@ -1268,7 +1268,7 @@ void GLUIPainter::drawPlus( const Rect& rect, int width, int fillColorId, int bo
         glVertex2f( x0, y1 + yoff);
         glTexCoord3f(xb, -yb, 0);
         glVertex2f( x0, y1 - yoff);
- 
+
         glTexCoord3f(-xb, 0, 0);
         glVertex2f( x0 + xoff , y1 + yoff);
         glTexCoord3f(xb, 0, 0);
@@ -1290,7 +1290,7 @@ void GLUIPainter::drawPlus( const Rect& rect, int width, int fillColorId, int bo
         glVertex2f( x1 + yoff, y0);
         glTexCoord3f(xb, -yb, 0);
         glVertex2f( x1 - yoff, y0);
- 
+
         glTexCoord3f(-xb, 0, 0);
         glVertex2f( x1 + yoff, y0 + yoff);
         glTexCoord3f(xb, 0, 0);
@@ -1313,10 +1313,10 @@ void GLUIPainter::drawPlus( const Rect& rect, int width, int fillColorId, int bo
 void GLUIPainter::drawDownArrow( const Rect& rect, int width, int fillColorId, int borderColorId ) const
 {
     float offset = sqrt(2.0)/2.0 ;
-   
+
     float xb = width;
     float yb = width;
-    
+
     float xoff = offset * xb ;
     float yoff = offset * yb ;
     float xoff2 = offset * xb *2.0 ;
@@ -1330,7 +1330,7 @@ void GLUIPainter::drawDownArrow( const Rect& rect, int width, int fillColorId, i
     float y1 = rect.y + rect.h * 0.6;
 
     glUseProgram(m_widgetProgram);
-    
+
     glUniform4fv( m_fillColorUniform, 1, s_colors[fillColorId]);
     glUniform4fv( m_borderColorUniform, 1, s_colors[borderColorId]);
     glUniform2f( m_zonesUniform, (xb) - 1, (xb) - 2);
@@ -1340,7 +1340,7 @@ void GLUIPainter::drawDownArrow( const Rect& rect, int width, int fillColorId, i
         glVertex2f( x0, y1 + yoff2);
         glTexCoord3f(xb, -yb, 0);
         glVertex2f( x0 - xoff2, y1);
- 
+
         glTexCoord3f(-xb, 0, 0);
         glVertex2f( x0 + xoff, y1 + yoff);
         glTexCoord3f(xb, 0, 0);
@@ -1382,10 +1382,10 @@ void GLUIPainter::drawDownArrow( const Rect& rect, int width, int fillColorId, i
 void GLUIPainter::drawUpArrow( const Rect& rect, int width, int fillColorId, int borderColorId ) const
 {
     float offset = sqrt(2.0)/2.0 ;
-   
+
     float xb = width;
     float yb = width;
-    
+
     float xoff = offset * xb ;
     float yoff = - offset * yb ;
     float xoff2 = offset * xb *2.0 ;
@@ -1399,7 +1399,7 @@ void GLUIPainter::drawUpArrow( const Rect& rect, int width, int fillColorId, int
     float y1 = rect.y + rect.h * 0.4;
 
     glUseProgram(m_widgetProgram);
-    
+
     glUniform4fv( m_fillColorUniform, 1, s_colors[fillColorId]);
     glUniform4fv( m_borderColorUniform, 1, s_colors[borderColorId]);
     glUniform2f( m_zonesUniform, (xb) - 1, (xb) - 2);
@@ -1409,7 +1409,7 @@ void GLUIPainter::drawUpArrow( const Rect& rect, int width, int fillColorId, int
         glVertex2f( x0, y1 + yoff2);
         glTexCoord3f(xb, -yb, 0);
         glVertex2f( x0 - xoff2, y1);
- 
+
         glTexCoord3f(-xb, 0, 0);
         glVertex2f( x0 + xoff, y1 + yoff);
         glTexCoord3f(xb, 0, 0);
@@ -1452,12 +1452,12 @@ void GLUIPainter::drawText( const Rect& r, const char * text, int nbLines, int c
 {
     if (isHover || isOn /* || isFocus*/)
     {
-        drawRect(r, cFontBack + (isHover) + (isOn << 1), cOutline);	
+        drawRect(r, cFontBack + (isHover) + (isOn << 1), cOutline);
     }
 
     glColor4fv(s_colors[cFont]);
     drawString(r.x, r.y, text, nbLines);
-    
+
     if (caretPos != -1)
     {
         int w = getTextLineWidthAt( text, caretPos);
@@ -1479,7 +1479,7 @@ void GLUIPainter::drawFrame( const Rect& rect, const Point& corner, bool isHover
 void GLUIPainter::drawBoolFrame( const Rect& rect, const Point& corner, bool isHover, bool isOn, bool /*isFocus*/ ) const
 {
     int lColorNb = cBool + (isHover) + (isOn << 1);// + (isFocus << 2);
-        
+
     drawRoundedRect( rect, corner , lColorNb, cOutline );
 }
 

@@ -1,6 +1,6 @@
 /*
 	This program is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License version 2 
+	it under the terms of the GNU General Public License version 2
 	as published by the Free Software Foundation.
 
 	This program is distributed in the hope that it will be useful,
@@ -23,7 +23,7 @@
 
 #ifndef __CUDACC__
 	#ifdef _MSC_VER
-		#include <float.h> // _isnan, because there's no std::isnan. 
+		#include <float.h> // _isnan, because there's no std::isnan.
 	#endif
 	#define _USE_MATH_DEFINES // M_PI & co.
 #endif
@@ -67,7 +67,7 @@ namespace math {
 		static HoD float tan(float val) { return std::tan(val); }
 		static HoD float cot(float val) { return 1/std::tan(val); } // cotangent = 1/tan
 		static HoD float to_radian(float val) { return val*M_PI/180; }
-		static HoD bool_t is_nan(float val) { return _isnan(val); } // msvc at it again.
+		// static HoD bool_t is_nan(float val) { return _isnan(val); } // msvc at it again.
 	#else
 		#if 0
 			static __host__ __device__ float sin(float x) { return sinf(x); }
@@ -78,7 +78,7 @@ namespace math {
 		#endif
 
 		// susceptible to m(ad) coalescing.
-		static __device__ float addm(float x, float y) { return x+y; } 
+		static __device__ float addm(float x, float y) { return x+y; }
 		static __device__ float subm(float x, float y) { return x-y; }
 		static __device__ float mulm(float x, float y) { return x*y; }
 		// not coalesced, let's say s(erialized).
@@ -90,7 +90,7 @@ namespace math {
 		// much faster but has issues with inf/large values and so on.
 		static __device__ float div(float x, float y) { return __fdividef(x, y); }
 		// (x*y) + z
-		static __device__ float fma(float x, float y, float z) { return fmaf(x, y, z); } 
+		static __device__ float fma(float x, float y, float z) { return fmaf(x, y, z); }
 
 
 		static __device__ float abs(float x) { return fabsf(x); }
@@ -114,7 +114,7 @@ namespace math {
 #define Vs(op, lhs, rhs)	vec_t(op((lhs).x(), (rhs)), op((lhs).y(), (rhs)), op((lhs).z(), (rhs)))
 #define H(op, rhs)			op(op((rhs).x(), (rhs).y()), (rhs).z())
 
-// There's apparently some issues with member (as opposed to static) functions, dot was 
+// There's apparently some issues with member (as opposed to static) functions, dot was
 // causing problems. Doesn't seem to trigger anymore. Phew.
 //note: this is used for cuda { device + host }, and the native compiler; of course each path has its peculiarities.
 //note: there's no FMA on current nvidia hardware, only MAC; they're labelled as FMA but there is an intermediary rounding
@@ -125,7 +125,7 @@ struct vec_t {
 		float3 m;
 		HoD vec_t(float a, float b, float c) : m(make_float3(a,b,c)) {}
 		// to ease proxification.
-		HaD float x() const { return m.x; } 
+		HaD float x() const { return m.x; }
 		HaD float y() const { return m.y; }
 		HaD float z() const { return m.z; }
 	#else
@@ -133,7 +133,7 @@ struct vec_t {
 		float m[3];
 		HoD vec_t(float a, float b, float c) { m[0]=a; m[1]=b; m[2]=c; }
 		HoD explicit vec_t(const float * const p) { m[0]=p[0]; m[1]=p[1]; m[2]=p[2]; }
-		HaD const float &x() const { return m[0]; } 
+		HaD const float &x() const { return m[0]; }
 		HaD const float &y() const { return m[1]; }
 		HaD const float &z() const { return m[2]; }
 		// well, since we now have an array, it's legit and convenient to
@@ -157,7 +157,7 @@ struct vec_t {
 	// mad allowed
 	HoD float dot(const vec_t &rhs) const { return x()*rhs.x() + y()*rhs.y() + z()*rhs.z(); }
 	template<bool allow_mad> HoD float dot(const vec_t &rhs) const {
-		if (allow_mad) 
+		if (allow_mad)
 			return x()*rhs.x() + y()*rhs.y() + z()*rhs.z();
 		else
 			return math::adds(math::adds(math::muls(x(), rhs.x()), math::muls(y(), rhs.y())), math::muls(z(), rhs.z()));
@@ -342,9 +342,9 @@ struct strided_vec_t {
 		const vec_t &operator[](unsigned i) const { return m[i]; }
 		vec_t extent() const { return m[1] - m[0]; }
 		friend aabb_t compose(const aabb_t &lhs, const aabb_t &rhs) { return aabb_t(min(lhs[0], rhs[0]), max(lhs[1], rhs[1])); }
-		static aabb_t infinite() { 
+		static aabb_t infinite() {
 			float inf = std::numeric_limits<float>::infinity();
-			return aabb_t(vec_t(inf, inf, inf), -vec_t(inf, inf, inf)); 
+			return aabb_t(vec_t(inf, inf, inf), -vec_t(inf, inf, inf));
 		}
 	};
 #endif // !__CUDACC__

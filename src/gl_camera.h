@@ -1,6 +1,6 @@
 /*
 	This program is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License version 2 
+	it under the terms of the GNU General Public License version 2
 	as published by the Free Software Foundation.
 
 	This program is distributed in the hope that it will be useful,
@@ -39,7 +39,7 @@ namespace gl {
 	// add a notion of up for the world, a fov and we have everything we need to:
 	// a) tell the rt what to shoot b) match that for GL.
 	class camera_t {
-		friend scene_t; // pff.
+		friend class ::scene_t; // pff.
 		static const vec_t world_ups[6];
 
 		vec_t lft, up, fwd;
@@ -82,7 +82,7 @@ namespace gl {
 		}
 		// GL: make a view matrix.
 		mat4_t make_view() const {
-			vec_t 
+			vec_t
 				at(eye + fwd),
 				zaxis((eye - at).norm()),
 				xaxis(-cross(world_ups[wu], zaxis).norm()),

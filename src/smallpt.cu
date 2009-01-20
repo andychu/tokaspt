@@ -1,6 +1,6 @@
 /*
 	This program is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License version 2 
+	it under the terms of the GNU General Public License version 2
 	as published by the Free Software Foundation.
 
 	This program is distributed in the hope that it will be useful,
@@ -35,7 +35,7 @@
 
 // sorry for the use of macros, but nvcc is getting on my nerves.
 #define TWO_PI			(2*CUDART_PI_F)
- 
+
 
 // CUDA can't deal with arrays of structs.
 // Then you can't __align__(__alignof(T)).
@@ -173,7 +173,7 @@ static __device__ void radiance(const ray_t primary, T &rng, U &rad) {
 		// pull 3 randoms now; unintuitive: they may not all be used, but then that makes our rng better and nvcc does a much better reg alloc
 		// ah, but... now that it's all in global memory... hmm...
 		const float3 rrrr(rng.gen3());
-		
+
 		const bool_t pred_d5 = ++depth > 5;
 		const bool_t pred_stop = (pred_d5 && rrrr.x >= hit->max_c) || depth > max_paths;
 		// update
@@ -207,7 +207,7 @@ static __device__ void radiance(const unsigned &num_spheres, const unsigned &num
 		// pull 3 randoms now; unintuitive: they may not all be used, but then that makes our rng better and nvcc does a much better reg alloc
 		// ah, but... now that it's all in global memory... hmm...
 		const float3 rrrr(rng.gen3());
-		
+
 		const bool_t pred_d5 = ++depth > 5;
 		const bool_t pred_stop = (pred_d5 && rrrr.x >= hit->max_c) || depth > num_paths;
 		// update
@@ -243,7 +243,7 @@ static __device__ float distribute(const float r /* [0, 2] */ ) {
 
 template<typename T>
 static __device__ float2 distribute(T &rng_state) {
-	const float2 
+	const float2
 		rand(rng_state.gen2()),
 		twice(make_float2(rand.x*2, rand.y*2));
 	return make_float2(distribute(twice.x), distribute(twice.y));
@@ -262,13 +262,14 @@ struct ALIGN(16) shared_data_t {
 	__device__ strided_vec_t<block_size> strided_vec(const unsigned x) { return strided_vec_t<block_size>(floats + x); }
 
 	#ifdef RNG_BAKED_USES_SHARED
-		float *ptr[block_size];
+		// float *ptr[block_size];
+		const float *ptr[block_size];
 	#endif
 };
 
 
 // render/accumulate an anti-aliased tile of 1 sample.
-template<block_size_t block_size, typename T> static __global__ 
+template<block_size_t block_size, typename T> static __global__
 	void smallpt_kernel(
 		const unsigned num_spheres, const unsigned num_paths,	// seems to be the only way not to pay registers
 		const unsigned should_clear_tile,						// for them.
@@ -276,7 +277,7 @@ template<block_size_t block_size, typename T> static __global__
 		const uint2 tile,		/* tile corner, global coords */
 		T *stuff,				/* either rng states or baked randoms */
 		vec_t *tile_out			/* tile output */
-	) 
+	)
 {
 	__shared__ shared_data_t<block_size> shared_data;
 
@@ -294,7 +295,7 @@ template<block_size_t block_size, typename T> static __global__
 	#endif
 
 	// generate a primary
-	const float2 
+	const float2
 		half(make_float2(.5f, .5f)),
 		subrand(distribute(rng_proxy)),
 		tilpix(make_float2(px + tile.x, py + tile.y)),							// pixel in global coords.
@@ -343,13 +344,13 @@ static __device__ float cumulative_moving_average(const float i, const float Ai,
 	return Ai + (Xi - Ai)/(i+1);
 }
 
-static __device__ float gamma_scale_round(float post_scale, float x){ 
-	return __powf(math::clamp(x), 1/2.2f)*post_scale +.5f; 
+static __device__ float gamma_scale_round(float post_scale, float x){
+	return __powf(math::clamp(x), 1/2.2f)*post_scale +.5f;
 }
 
 // compose a tile into the destination; try to coalesce read/write as much as possible (by going component wise).
 template<bool cummulative, bool to_rgb8, typename T, typename U>
-static __global__ 
+static __global__
 	void compose_tile_linear(float iter, float rcp_num_samples, unsigned num_chunks, unsigned res_x3, unsigned offset3, const T *tile, U *pix) {
 		unsigned stride = gridDim.x*blockDim.x;
 		unsigned tid = blockDim.x*blockIdx.x + threadIdx.x;
@@ -411,8 +412,8 @@ struct launcher_t {
 	unsigned prev_max_paths; // because we need to reallocate if can be dynamically set.
 	unsigned timer;
 
-	launcher_t(unsigned w, unsigned h) 
-		: 
+	launcher_t(unsigned w, unsigned h)
+		:
 			res_x(tweaks::make_res_x(w)), res_y(tweaks::make_res_x(h)),
 			num_pixels(res_y*res_x), num_threads_per_tile(tile_area*SS*SS),
 			prev_max_paths(0),
@@ -483,7 +484,7 @@ struct launcher_t {
 			const unsigned sanitized_max_paths = params->max_paths > 2 ? params->max_paths : 2;
 			const unsigned want = tile_area*(2 + 3*sanitized_max_paths), data_size = rng::compute_data_size(want);
 			if (prev_max_paths < sanitized_max_paths) {
-				printf("baked rng: max_paths %d, want %d -> %.3fM, %d threads, %d chunks.\n", 
+				printf("baked rng: max_paths %d, want %d -> %.3fM, %d threads, %d chunks.\n",
 					sanitized_max_paths, want, data_size/(1024.*1024), rng::param_n, rng::compute_num_chunks(want));
 				for (unsigned i=0; i<num_streams; ++i) if (d_data[i]) cuda_deallocate(d_data[i]);
 				for (unsigned i=0; i<num_streams; ++i) cuda_allocate<true>(d_data[i], data_size/sizeof(rng::data_t));
@@ -512,7 +513,7 @@ struct launcher_t {
 			unsigned offsets[num_streams];	// offset of that tile into the whole picture.
 			for (unsigned i=0; i<num_streams; ++i) {
 				const unsigned tx = (tile_num+i) % num_tiles_x,  ty = (tile_num+i) / num_tiles_x;
-				tiles[i] = make_uint2(tile_size_x*tx, tile_size_y*ty);	
+				tiles[i] = make_uint2(tile_size_x*tx, tile_size_y*ty);
 				offsets[i] = num_components*(res_x*tile_size_y*ty + tile_size_x*tx); // we'll go component wise
 			}
 			if (params->verbose) progress_bar(tile_num+num_streams, num_tiles);
