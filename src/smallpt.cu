@@ -314,18 +314,47 @@ template<block_size_t block_size, typename T> static __global__
 
 	// and now gather subpixels.
 	__syncthreads();
-	if ((threadIdx.x & ((SS*SS)-1)) == 0) {
-		const uint32_t idx = pidx; // already computed, __umul24(tile_size_x, py) + px;
-		const float ss = 1.f/(SS*SS); // exact.
-		vec_t sum(
-			vec_t(shared_data.strided_vec(threadIdx.x + 0))*ss +
-			vec_t(shared_data.strided_vec(threadIdx.x + 1))*ss +
-			vec_t(shared_data.strided_vec(threadIdx.x + 2))*ss +
-			vec_t(shared_data.strided_vec(threadIdx.x + 3))*ss );
-		// should we initialize that tile?
-		if (!should_clear_tile) sum = sum + tile_out[idx];
-		tile_out[idx] = sum;
-	}
+    #if 1
+        // coalesced writes, bank conflicts.
+        // so far we've produced a block worth of super sampled samples with a base
+        // tile offset of __umul24(block_size, blockIdx.x) / (SS*SS) in shared memory (strided).
+        enum { num_cpnt = 3, num_subcpnt = num_cpnt*block_size/(SS*SS) };
+        // to coalesce writes (once subsamples are accumulated), the idea is to remap
+        // the bottom num_subcpnt threads into contiguous sample components.
+        // trouble is, while we'll get coalesced writes, we'll also 
+        // generate a metric ton of bank conflicts.
+        if (threadIdx.x < num_subcpnt) {
+            const float ss = 1.f/(SS*SS); // exact.
+            const uint32_t idx_base = __umul24(block_size, blockIdx.x) / (SS*SS);
+            const uint32_t major = threadIdx.x / num_cpnt;
+            const uint32_t minor = threadIdx.x % num_cpnt;
+            const uint32_t shared_offset = major*(SS*SS) + minor*block_size;
+
+            float sum = 0;
+            // nvcc has troubles with sum += shared_data.strided_vec(major*(SS*SS) + i).get(minor)*ss;
+            // and wants another register for that. kludge.
+            float * const p = reinterpret_cast<float*>(tile_out + idx_base) + threadIdx.x;
+            if (!should_clear_tile) sum = *p;
+            for (unsigned i=0; i<(SS*SS); ++i)
+                // sum += shared_data.strided_vec(major*(SS*SS) + i).get(minor)*ss;
+                sum += shared_data.floats[shared_offset + i]*ss;
+            *p = sum;
+        }
+    #else
+        // uncoalesced writes, no bank conflicts.
+	    if ((threadIdx.x & ((SS*SS)-1)) == 0) {
+		    const uint32_t idx = pidx; // already computed, __umul24(tile_size_x, py) + px;
+		    const float ss = 1.f/(SS*SS); // exact.
+		    vec_t sum(
+			    vec_t(shared_data.strided_vec(threadIdx.x + 0))*ss +
+			    vec_t(shared_data.strided_vec(threadIdx.x + 1))*ss +
+			    vec_t(shared_data.strided_vec(threadIdx.x + 2))*ss +
+			    vec_t(shared_data.strided_vec(threadIdx.x + 3))*ss );
+		    // should we initialize that tile?
+		    if (!should_clear_tile) sum = sum + tile_out[idx];
+		    tile_out[idx] = sum;
+	    }
+    #endif
 }
 // ===========================================================================
 //					helper kernels.
