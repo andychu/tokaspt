@@ -749,7 +749,7 @@ namespace gl {
 	}
 
 	// res is the intitial rendering resolution.
-	static void init(const point_t res) {
+	static void init(const point_t res, const char * const scene_filename) {
 		gl::timer = 0;
 		cutCreateTimer(&gl::timer);
 		cutStartTimer(gl::timer);
@@ -771,7 +771,7 @@ namespace gl {
 		glHint(GL_MULTISAMPLE_FILTER_HINT_NV, GL_NICEST);
 
 		// prime the scene data and camera.
-		scene.init(gl::state::cam);
+		scene.init(gl::state::cam, scene_filename);
 		//
 		// rest of init will happen naturally as a resize.
 		//
@@ -779,53 +779,6 @@ namespace gl {
 }
 
 
-int run(int argc, char *argv[]) {
-	const char title[] = "the once known as smallpt.";
-    glutInit(&argc, argv);
-	glutInitDisplayString(glut_init_display_string);
-    glutInitWindowSize(window_width, window_height);
-    glutCreateWindow(title);
-	{
-		int doublebuffer = glutGet(GLUT_WINDOW_DOUBLEBUFFER);
-		int depth = glutGet(GLUT_WINDOW_DEPTH_SIZE);
-		int multi = glutGet(GLUT_WINDOW_NUM_SAMPLES);
-		printf("glut: doublebuffer %s depth bits %d multisamples %d\n", doublebuffer ? "yes" : "no", depth, multi);
-
-		int ms_buf, ms;
-		glGetIntegerv (GL_SAMPLE_BUFFERS_ARB, &ms_buf);
-		glGetIntegerv (GL_SAMPLES_ARB, &ms);
-		printf("OpenGl: %d sample buffers, %d samples.\n", ms_buf, ms);
-	}
-
-
-    // initialize necessary OpenGL extensions
-    glewInit();
-    if (!glewIsSupported("GL_VERSION_2_0 GL_ARB_pixel_buffer_object GL_EXT_framebuffer_object"))
-		fatal("missing OpenGL 2.0+PBO+FBO");
-
-
-	ui::init();
-	gl::init(point_t(window_width, window_height));
-
-    // register callbacks
-    glutDisplayFunc(display);
-    glutKeyboardFunc(keyboard_regular<1>);
-	glutKeyboardUpFunc(keyboard_regular<0>);
-	glutSpecialFunc(keyboard_special<1>);
-	glutSpecialUpFunc(keyboard_special<0>);
-    glutReshapeFunc(reshape);
-    glutIdleFunc(idle);
-
-	glutMouseFunc(mouse);
-	glutMotionFunc(motion);
-
-	glutIgnoreKeyRepeat(true);
-
-
-	glutMainLoop();
-
-	return -1;
-}
 
 // ===========================================================================
 //							UI
@@ -1557,26 +1510,88 @@ void menu(int i) {
 
 
 
-int main(int argc, char** argv) {
-	CUT_DEVICE_INIT(argc, argv);
-	int dev;
-	cudaGetDevice(&dev);
-	cudaDeviceProp prop;
-	misc::wipe(prop);
-	cudaGetDeviceProperties(&prop, dev);
-	if (prop.major == 9999 && prop.minor == 9999)
-		fatal("no CUDA support?!");
+static int usage(const char * const s) {
+	printf("%s [-w width] [-h height] [\"scene filename\"]\n", s);
+	return 0;
+}
 
-	misc::wipe(params);
-	params.framebuffer = 0;
-	params.gamma = 2.2;
-	params.is_progressive = false;
-	params.max_paths = 4;
-	params.num_spheres = 0;
-	params.pass = 0;
-	params.regs_per_block = prop.regsPerBlock;
-	params.spp = SS*SS;
-	params.verbose = true;
+int main(int argc, char *argv[]) {
+	const char title[] = "the once known as smallpt.";
+	//FIXME: both CUDA and GLUT want to parse that command line, find a way to gracefuly integrate it all.
+	int w = window_width, h = window_height;
+	char *filename = 0;
+	for (int i=1; i<argc; ++i)
+		if (argv[i][0] == '-')
+			switch(argv[i][1]) {
+				case 'w': if (++i < argc) w = std::atoi(argv[i]); break;
+				case 'h': if (++i < argc) h = std::atoi(argv[i]); break;
+				default: // assume it's some argument for cuda/glut, skip
+					++i;
+			}
+		else
+			filename = argv[i];
 
-	return run(argc, argv);
+	{	// CUDA setup.
+		CUT_DEVICE_INIT(argc, argv);
+		int dev;
+		cudaGetDevice(&dev);
+		cudaDeviceProp prop;
+		misc::wipe(prop);
+		cudaGetDeviceProperties(&prop, dev);
+		if (prop.major == 9999 && prop.minor == 9999)
+			fatal("no CUDA support?!");
+
+		misc::wipe(params);
+		params.framebuffer = 0;
+		params.gamma = 2.2;
+		params.is_progressive = false;
+		params.max_paths = 4;
+		params.num_spheres = 0;
+		params.pass = 0;
+		params.regs_per_block = prop.regsPerBlock;
+		params.spp = SS*SS;
+		params.verbose = true;
+	}
+	{	// OpenGL / GLUT setup
+		glutInit(&argc, argv);
+		glutInitDisplayString(glut_init_display_string);
+		glutInitWindowSize(w, h);
+		glutCreateWindow(title);
+		{
+			int doublebuffer = glutGet(GLUT_WINDOW_DOUBLEBUFFER);
+			int depth = glutGet(GLUT_WINDOW_DEPTH_SIZE);
+			int multi = glutGet(GLUT_WINDOW_NUM_SAMPLES);
+			printf("glut: doublebuffer %s depth bits %d multisamples %d\n", doublebuffer ? "yes" : "no", depth, multi);
+
+			int ms_buf, ms;
+			glGetIntegerv (GL_SAMPLE_BUFFERS_ARB, &ms_buf);
+			glGetIntegerv (GL_SAMPLES_ARB, &ms);
+			printf("OpenGl: %d sample buffers, %d samples.\n", ms_buf, ms);
+		}
+
+		// initialize necessary OpenGL extensions
+		glewInit();
+		if (!glewIsSupported("GL_VERSION_2_0 GL_ARB_pixel_buffer_object GL_EXT_framebuffer_object"))
+		fatal("missing OpenGL 2.0+PBO+FBO");
+
+		ui::init();
+		gl::init(point_t(w, h), filename);
+
+		// register callbacks
+		glutDisplayFunc(display);
+		glutKeyboardFunc(keyboard_regular<1>);
+		glutKeyboardUpFunc(keyboard_regular<0>);
+		glutSpecialFunc(keyboard_special<1>);
+		glutSpecialUpFunc(keyboard_special<0>);
+		glutReshapeFunc(reshape);
+		glutIdleFunc(idle);
+
+		glutMouseFunc(mouse);
+		glutMotionFunc(motion);
+
+		glutIgnoreKeyRepeat(true);
+	}
+
+	glutMainLoop();
+	return -1;
 }

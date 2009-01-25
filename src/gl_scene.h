@@ -150,8 +150,8 @@ public:
 	}
 	void clear() { spheres.clear(); reset(); }
 
-	// set it up with a initial scenery, also prime a view.
-	void init(gl::camera_t &cam);
+	// set it up with a initial scenery, also prime a view (optionally load it from a file).
+	void init(gl::camera_t &cam, const char * const scene_filename);
 	// update/upload scene to the cuda side if needed
 	void upload_if(render_params_t &params);
 	// shoot at every sphere to find nearest / farthest (if nearer, farther).
@@ -200,8 +200,13 @@ public:
 		add(s);
 	}
 
+	// ask for a filename, save.
 	bool_t save(const gl::camera_t &cam);
+	// ask for a filename, try to load, iff successful replace the current one.
 	bool_t load(gl::camera_t &cam);
+	// try to load a scene, iff successful replace the current one.
+	bool_t load(gl::camera_t &cam, const char * const filename);
+	// transitional.
 	bool_t load_old(gl::camera_t &cam);
 
 	// englobe the whole scene.

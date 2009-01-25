@@ -279,15 +279,17 @@ static const sphere_t spheres[] = {
 // ===========================================================================
 
 
-void scene_t::init(gl::camera_t &cam) {
-	printf("scene_t::init: priming with %d spheres.\n", scenes::num_spheres);
+void scene_t::init(gl::camera_t &cam, const char * const scene_filename) {
 	reset();
-	for (size_t i=0; i<scenes::num_spheres; ++i)
-		spheres.push_back(scenes::init::spheres[i]);
+	if (!(scene_filename && load(cam, scene_filename))) {
+		printf("scene_t::init: priming with builtin, %d spheres.\n", scenes::num_spheres);
+		for (size_t i=0; i<scenes::num_spheres; ++i)
+			spheres.push_back(scenes::init::spheres[i]);
+
+		cam = scenes::init::cam;
+	}
 	loose_bb = bounding_box();
 	set_dirty();
-
-	cam = scenes::init::cam;
 }
 
 
@@ -328,60 +330,63 @@ void scene_t::picking(const vec_t &ray_o, const vec_t &ray_d) {
 			sel = unsigned(i);
 }
 
-
-// try to load a scene, iff successful replace the current one.
 bool_t scene_t::load(gl::camera_t &cam) {
 	char filename[platform::magic_fs_path_len];
-	if (platform::dialog_load_save<true>("Load what?", filename))
-		if (FILE *file = fopen(filename, "rb")) {
-			spheres_t rspheres;
-			gl::camera_t rcam;
-			sphere_t s;
-			int stage = 0, num = 0;
-			int got = 0, integral = 0;
-			enum { max_len = 255 };
-			char buf[max_len+1];
-			bool old_version_fixup = true;
-			#define V(vec) &vec[0], &vec[1], &vec[2]
-			// braindead.
-			while(fgets(buf, max_len, file) == buf) {
-				buf[max_len] = 0;
-				if (buf[0] != 'C' && buf[0] != 'S') continue; // yay.
-				if (stage == 0) {
-					got = sscanf(buf, "Cam(V(%f,%f,%f), V(%f,%f,%f), V(%f,%f,%f), %f, %d)", V(rcam.eye),  V(rcam.fwd), V(rcam.up), &rcam.fovy, &integral);
-					if (got == 11) {
-						rcam.wu  = gl::camera_t::world_up_t(integral);
-						rcam.lft = cross(gl::camera_t::world_ups[rcam.wu], rcam.fwd).norm();
-						++stage;
-						continue;
-					}
+	// if (platform::dialog_load_save<true>("Load what?", filename))
+	platform::dialog_load_save<true>("Load what?", filename);
+	return load(cam, filename);
+}
+
+bool_t scene_t::load(gl::camera_t &cam, const char * const filename) {
+	if (FILE *file = fopen(filename, "rb")) {
+		spheres_t rspheres;
+		gl::camera_t rcam;
+		sphere_t s;
+		int stage = 0, num = 0;
+		int got = 0, integral = 0;
+		enum { max_len = 255 };
+		char buf[max_len+1];
+		bool old_version_fixup = true;
+		#define V(vec) &vec[0], &vec[1], &vec[2]
+		// braindead.
+		while(fgets(buf, max_len, file) == buf) {
+			buf[max_len] = 0;
+			if (buf[0] != 'C' && buf[0] != 'S') continue; // yay.
+			if (stage == 0) {
+				got = sscanf(buf, "Cam(V(%f,%f,%f), V(%f,%f,%f), V(%f,%f,%f), %f, %d)", V(rcam.eye),  V(rcam.fwd), V(rcam.up), &rcam.fovy, &integral);
+				if (got == 11) {
+					rcam.wu  = gl::camera_t::world_up_t(integral);
+					rcam.lft = cross(gl::camera_t::world_ups[rcam.wu], rcam.fwd).norm();
+					++stage;
+					continue;
 				}
-				else {
-					got = sscanf(buf, "S(V(%f,%f,%f), V(%f,%f,%f), V(%f,%f,%f), %f, %d)", V(s.pos), V(s.emi), V(s.col), &s.rad, &integral);
-					if (got == 11) {
-						s.type = refl_t(integral);
-						rspheres.push_back(s);
-						++num;
-						continue;
-					}
+			}
+			else {
+				got = sscanf(buf, "S(V(%f,%f,%f), V(%f,%f,%f), V(%f,%f,%f), %f, %d)", V(s.pos), V(s.emi), V(s.col), &s.rad, &integral);
+				if (got == 11) {
+					s.type = refl_t(integral);
+					rspheres.push_back(s);
+					++num;
+					continue;
 				}
-				printf("scene_t::load: stage:%d got:%d, perplexed by [%s]\n", stage, got, buf);
-				stage = -1;
-				break;
 			}
-			#undef V
-			fclose(file);
-			if (stage != -1 && num) {
-				printf("scene_t::load[%s]: read %d spheres, and everything's fine.\n", filename, num);
-				if (old_version_fixup) 	printf("scene_t::load: but it was an old crummy version, please save again.");
-				cam = rcam;
-				spheres.swap(rspheres);
-				set_dirty();
-				return true;
-			}
+			printf("scene_t::load: stage:%d got:%d, perplexed by [%s]\n", stage, got, buf);
+			stage = -1;
+			break;
 		}
-		printf("scene_t::load: no go.\n");
-		return false;
+		#undef V
+		fclose(file);
+		if (stage != -1 && num) {
+			printf("scene_t::load[%s]: read %d spheres, and everything's fine.\n", filename, num);
+			if (old_version_fixup) 	printf("scene_t::load: but it was an old crummy version, please save again.");
+			cam = rcam;
+			spheres.swap(rspheres);
+			set_dirty();
+			return true;
+		}
+	}
+	printf("scene_t::load: no go.\n");
+	return false;
 }
 
 // try to load a scene, iff successful replace the current one.
