@@ -27,11 +27,12 @@
 
 class scene_t;
 namespace gl {
+class camera_t;
+	// a virtual screen, rays will be shot through from corner, up to corner+(dx*res.x, dy*res.y).
 	// among other things, allows to easily generate ray (directions) the same way the rt side does.
-	// derived from a camera_t.
 	struct screen_sampler_t {
-		vec_t top, dx, dy;
-		vec_t map(const point_t &point) const { return vec_t(top + dx*float(point.x) + dy*float(point.y)); }
+		vec_t corner, dx, dy;
+		vec_t map(const point_t &point) const { return vec_t(corner + dx*float(point.x) + dy*float(point.y)); }
 	};
 
 
@@ -49,6 +50,9 @@ namespace gl {
 		enum world_up_t { UP_Y = 0, UP_Z, UP_X, UP_NY, UP_NZ, UP_NX, UP_LAST };
 		world_up_t wu;
 
+		// to make things more convenient for the UI, flip rendered image vertically.
+		enum { flip_y = true };
+
 		void set_dirty() {} // for simplicity sake, we'll detect that more brutally.
 		void set_wu(world_up_t w)		{ set_dirty(); wu = w; }
 		void set_eye(const vec_t &v)	{ set_dirty(); eye = v; }
@@ -65,9 +69,21 @@ namespace gl {
 			wu = world_up_t((wu+1) % UP_LAST);
 			look_at(eye + fwd);
 		}
+		// look at pos.
+		// as we'll also use it to sanitize loaded cameras, make it a bit more robust.
 		void look_at(const vec_t &pos) {
 			fwd = (pos - eye).norm();
-			lft = cross(world_ups[wu], fwd).norm();
+			if (math::abs(fwd.dot(world_ups[wu])) < .99f)
+				lft = cross(world_ups[wu], fwd).norm();
+			else {
+				// gimbal lock, nudge.
+				lft = vec_t(0, 0, 0);
+				for (unsigned i=0; i<3; ++i)
+					if (math::abs(world_ups[wu][i]) == 1) {
+						lft[(i+1)%3] = 1;
+						break;
+					}
+			}
 			up  = cross(fwd, lft).norm();
 			set_dirty();
 		}
@@ -75,21 +91,22 @@ namespace gl {
 		// GL: set the projection.
 		void set_frustum(const float aspect_ratio /* w/h */, const float t_near, const float t_far) const {
 			const float t = math::tan(math::to_radian(fovy)/2);
-			const float h = t_near*t;		// height of near plane / 2.
+			const float h = t_near*t;			// height of near plane / 2.
 			const float w = h*aspect_ratio;	// width of near_place / 2.
 
 			glFrustum(-w, w, -h, h, t_near, t_far);
 		}
-		// GL: make a view matrix.
+
+		// GL: make a view matrix, look into -Z.
 		mat4_t make_view() const {
-			vec_t
-				at(eye + fwd),
-				zaxis((eye - at).norm()),
+			const vec_t
+				zaxis(-fwd),
 				xaxis(-cross(world_ups[wu], zaxis).norm()),
-				yaxis(cross(zaxis, xaxis).norm());
+				yaxis(cross(zaxis, -xaxis).norm());
 
 			return mat4_t::from_axis_inv(xaxis, yaxis, zaxis, eye);
 		}
+
 		// RT: bake ray gen parameters.
 		screen_sampler_t make_sampler(const point_t &res) const {
 			const float aspect = float(res.x)/float(res.y);
@@ -98,9 +115,10 @@ namespace gl {
 			screen_sampler_t s;
 			const float sdx = 2.f/res.x, sdy = 2.f/res.y;
 			const float t_near = 1;
-			s.top = fwd*t_near - up*height - lft*width;
+			const float flip = flip_y ? -1 : +1; // note: if we flip here, also flip the textured quad.
+			s.corner = fwd*t_near - up*height*flip - lft*width;
 			s.dx  = lft*width*sdx;
-			s.dy  = up*height*sdy;
+			s.dy  = up*height*sdy*flip;
 			return s;
 		}
 

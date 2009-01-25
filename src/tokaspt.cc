@@ -638,25 +638,22 @@ namespace gl {
 				glDisable(GL_DEPTH_TEST);
 				glEnable(GL_TEXTURE_2D);
 				glColor4ub(255, 255, 255, 255);
-				enum { flip = 0 };
 				glBegin(GL_QUADS);
-				if (flip) {
-					glTexCoord2f(0, 1); glVertex3f(-1, +1, 0.5f);
-					glTexCoord2f(1, 1); glVertex3f(+1, +1, 0.5f);
-					glTexCoord2f(1, 0); glVertex3f(+1, -1, 0.5f);
-					glTexCoord2f(0, 0); glVertex3f(-1, -1, 0.5f);
-				}
-				else {
-					glTexCoord2f(0, 1); glVertex3f(-1, -1, 0.5f);
-					glTexCoord2f(1, 1); glVertex3f(+1, -1, 0.5f);
-					glTexCoord2f(1, 0); glVertex3f(+1, +1, 0.5f);
-					glTexCoord2f(0, 0); glVertex3f(-1, +1, 0.5f);
-				}
+					// if we've flipped our screen vertically, unflip here.
+					const float
+						z = .5f,
+						v[4][3]  = { { -1,-1, z }, { +1,-1, z }, { +1,+1, z }, { -1,+1, z } },
+						tc[4][2] = {     { 0, 0 },     { 1, 0 },     { 1, 1 },     { 0, 1 } };
+					const int ti[2][4] = { { 0,1,2,3 }, { 3,2,1,0 } };
+
+					glTexCoord2fv(tc[ti[gl::camera_t::flip_y][0]]); glVertex3fv(v[0]);
+					glTexCoord2fv(tc[ti[gl::camera_t::flip_y][1]]); glVertex3fv(v[1]);
+					glTexCoord2fv(tc[ti[gl::camera_t::flip_y][2]]); glVertex3fv(v[2]);
+					glTexCoord2fv(tc[ti[gl::camera_t::flip_y][3]]); glVertex3fv(v[3]);
 				glEnd();
 				glMatrixMode(GL_PROJECTION);
 				glPopMatrix();
 				glDisable(GL_TEXTURE_2D);
-
 
 				// also, prepare some more states.
 				glEnable(GL_DEPTH_TEST);
@@ -736,7 +733,7 @@ namespace gl {
 			gl::state::smp = gl::state::cam.make_sampler(gl::state::tex_and_pbo->res); // if that's what's mapped.
 			const vec_t cu_cam[4] = {
 				gl::state::smp.dx, gl::state::smp.dy,
-				gl::state::smp.top, gl::state::cam.get_eye()
+				gl::state::smp.corner, gl::state::cam.get_eye()
 			};
 			cuda_upload_camera(cu_cam);
 			gl::state::copy_camera();
@@ -894,7 +891,11 @@ namespace ui {
 				else watchdog_scene_wipe = 2; // release + press.
 				return;
 
-			case 'x': gl::state::cam.cycle_world_up(); return; // cycle world's up
+			case 'x': // cycle world's up
+				gl::state::cam.cycle_world_up();
+				//FIXME: such output/feedback should be displayed somehow.
+				printf("world up(%+g, %+g, %+g)\n", gl::state::cam.get_world_up().x(), gl::state::cam.get_world_up().y(), gl::state::cam.get_world_up().z());
+				return;
 
 
 			case '\b': scene.deselect(); return; // deselect.
@@ -903,11 +904,12 @@ namespace ui {
 
 			case 0x03: if (e.mod_ctrl) scene.copy(); return;	// ctrl-c
 			case 0x16: // ctrl-v (same place or in front of camera with shift)
-				if (e.mod_ctrl)
+				if (e.mod_ctrl) {
 					if (e.mod_shift)
 						scene.paste(gl::state::cam.get_eye() + gl::state::cam.get_fwd());
 					else
 						scene.paste();
+				}
 				return;
 
 			case 0x7f: scene.del(); return; // delete selection, del.

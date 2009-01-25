@@ -346,7 +346,6 @@ bool_t scene_t::load(gl::camera_t &cam, const char * const filename) {
 		int got = 0, integral = 0;
 		enum { max_len = 255 };
 		char buf[max_len+1];
-		bool old_version_fixup = true;
 		#define V(vec) &vec[0], &vec[1], &vec[2]
 		// braindead.
 		while(fgets(buf, max_len, file) == buf) {
@@ -356,7 +355,8 @@ bool_t scene_t::load(gl::camera_t &cam, const char * const filename) {
 				got = sscanf(buf, "Cam(V(%f,%f,%f), V(%f,%f,%f), V(%f,%f,%f), %f, %d)", V(rcam.eye),  V(rcam.fwd), V(rcam.up), &rcam.fovy, &integral);
 				if (got == 11) {
 					rcam.wu  = gl::camera_t::world_up_t(integral);
-					rcam.lft = cross(gl::camera_t::world_ups[rcam.wu], rcam.fwd).norm();
+					// sanitize
+					rcam.look_at(rcam.eye + rcam.fwd);
 					++stage;
 					continue;
 				}
@@ -378,7 +378,6 @@ bool_t scene_t::load(gl::camera_t &cam, const char * const filename) {
 		fclose(file);
 		if (stage != -1 && num) {
 			printf("scene_t::load[%s]: read %d spheres, and everything's fine.\n", filename, num);
-			if (old_version_fixup) 	printf("scene_t::load: but it was an old crummy version, please save again.");
 			cam = rcam;
 			spheres.swap(rspheres);
 			set_dirty();
@@ -416,6 +415,7 @@ bool_t scene_t::load_old(gl::camera_t &cam) {
 					got = sscanf(buf, "Cam(V(%f,%f,%f), V(%f,%f,%f), V(%f,%f,%f), %f)", V(rcam.eye),  V(rcam.fwd), V(rcam.up), &rcam.fovy);
 					if (got == 10) {
 						rcam.wu  = gl::camera_t::UP_NY;
+						// sanitize
 						rcam.lft = cross(gl::camera_t::world_ups[rcam.wu], rcam.fwd).norm();
 						++stage;
 						continue;
@@ -438,7 +438,7 @@ bool_t scene_t::load_old(gl::camera_t &cam) {
 			}
 			#undef V
 			fclose(file);
-			if (stage != -1 && num) {
+			if (stage != -1u && num) {
 				printf("scene_t::load[%s]: read %d spheres, and everything's fine.\n", filename, num);
 				if (old_version_fixup) 	printf("scene_t::load: but it was an old crummy version, please save again.");
 				cam = rcam;
