@@ -312,9 +312,9 @@ void scene_t::upload_if(render_params_t &params) {
 
 
 void scene_t::estimate_near_far(const vec_t &pos, float &t_near, float &t_far) {
-	float t = scenes::details::inf;
 	for (spheres_t::const_iterator it(spheres.begin()); it != spheres.end(); ++it) {
 		vec_t d((it->pos - pos).norm());
+		float t = scenes::details::inf;
 		if (scenes::intersect(pos, d, *it, t)) {
 			t_near = std::min(t_near, t);
 			t_far  = std::max(t_far , t + it->rad*2);
