@@ -1519,7 +1519,7 @@ int main(int argc, char *argv[]) {
 	const char title[] = "the once known as smallpt.";
 	//FIXME: both CUDA and GLUT want to parse that command line, find a way to gracefuly integrate it all.
 	int w = window_width, h = window_height;
-	char *filename = 0;
+	const char *filename = "default.scene";
 	for (int i=1; i<argc; ++i)
 		if (argv[i][0] == '-')
 			switch(argv[i][1]) {
