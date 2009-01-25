@@ -25,6 +25,8 @@ CXXFLAGS :=-pipe -g -O3 -march=native -ffast-math -fomit-frame-pointer -fno-rtti
 CXXFLAGS +=-Wall -Wextra -Wshadow -Wno-unused
 CXXFLAGS +=-MMD
 CXXFLAGS +=-DNDEBUG
+# FreeGlut has trouble parsing Glut init strings but pretends it's fine. kludge.
+CXXFLAGS +=-DUSE_FREEGLUT
 
 CXXFLAGS +=-I$(SRCDIR) -I$(SRCDIR)/nv
 CXXFLAGS +=-I$(CUDADIR)/include -I$(CUDADIR)/common/inc/
