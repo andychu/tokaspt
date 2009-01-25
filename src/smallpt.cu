@@ -314,7 +314,7 @@ template<block_size_t block_size, typename T> static __global__
 
 	// and now gather subpixels.
 	__syncthreads();
-    #if 1
+    #if 0
         // coalesced writes, bank conflicts.
         // so far we've produced a block worth of super sampled samples with a base
         // tile offset of __umul24(block_size, blockIdx.x) / (SS*SS) in shared memory (strided).
