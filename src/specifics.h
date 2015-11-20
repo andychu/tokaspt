@@ -74,8 +74,8 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
-#include <cutil.h>
-#include <cutil_inline.h>
+//#include <cutil.h>
+//#include <cutil_inline.h>
 
 #include <math_constants.h> // CUDART constants.
 

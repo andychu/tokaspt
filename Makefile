@@ -38,7 +38,8 @@ LDFLAGS  +=-lcutil -lcuda -lcudart -lGL -lGLU -lGLEW_x86_64 -lglut # snatched fr
 # /usr/local/cuda/bin/nvcc    --compiler-options -fno-strict-aliasing  -I. -I/usr/local/cuda/include -I../../common/inc -DUNIX -O3   -o data/threadMigration.cubin -cubin threadMigration.cu
 NVCC := $(CUDADIR)/bin/nvcc
 NVCCFLAGS :=-DUNIX -O3 -I$(CUDADIR)/include -I$(CUDADIR)/common/inc/
-NVCCFLAGS +=--ptxas-options=-v -Xopencc "-Wall,-Wno-unused,-Wno-implicit-function-declaration"
+#NVCCFLAGS +=--ptxas-options=-v -Xopencc "-Wall,-Wno-unused,-Wno-implicit-function-declaration"
+NVCCFLAGS +=--ptxas-options=-v --compiler-options "-Wall,-Wno-unused,-Wno-implicit-function-declaration"
 ## NVCCFLAGS +=--use_fast_math -arch sm_11
 NVCCNFLAGS_NATIVE :=-fno-strict-aliasing
 #NVCCNFLAGS_NATIVE +=-fomit-frame-pointer -frename-registers -march=native
